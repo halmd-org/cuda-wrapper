@@ -25,6 +25,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 
+#include <cuda_wrapper/detail/iterator_category_adaptor.hpp>
+#include <cuda_wrapper/detail/iterator_tag.hpp>
+
 namespace cuda {
 
 /**
@@ -37,9 +40,9 @@ public:
     typedef vector<T> vector_type;
     typedef T value_type;
     typedef T* pointer;
-    typedef T* iterator;
     typedef T const* const_pointer;
-    typedef T const* const_iterator;
+    typedef detail::iterator_category_adaptor<T*, detail::device_random_access_iterator_tag> iterator;
+    typedef detail::iterator_category_adaptor<T const*, detail::device_random_access_iterator_tag> const_iterator;
     typedef size_t size_type;
 
 private:
@@ -166,22 +169,22 @@ public:
 
     iterator begin()
     {
-        return *m_mem;
+        return iterator(*m_mem);
     }
 
     const_iterator begin() const
     {
-        return *m_mem;
+        return const_iterator(*m_mem);
     }
 
     iterator end()
     {
-        return *m_mem + m_size;
+        return iterator(*m_mem + m_size);
     }
 
     const_iterator end() const
     {
-        return *m_mem + m_size;
+        return const_iterator(*m_mem + m_size);
     }
 
 private:

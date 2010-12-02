@@ -23,6 +23,8 @@
 
 #include <vector>
 
+#include <cuda_wrapper/detail/iterator_category_adaptor.hpp>
+#include <cuda_wrapper/detail/iterator_tag.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
 
 namespace cuda {
@@ -39,6 +41,8 @@ public:
     typedef std::vector<T, allocator<T> > _Base;
     typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
+    typedef detail::iterator_category_adaptor<typename _Base::iterator, detail::host_random_access_iterator_tag> iterator;
+    typedef detail::iterator_category_adaptor<typename _Base::const_iterator, detail::host_random_access_iterator_tag> const_iterator;
 
 public:
     /** creates an empty vector */
@@ -48,6 +52,26 @@ public:
     /** creates a vector with a copy of a range */
     template <class InputIterator>
     vector(InputIterator begin, InputIterator end, _Alloc const& alloc = _Alloc()) : _Base(begin, end, alloc) {}
+
+    iterator begin()
+    {
+        return iterator(_Base::begin());
+    }
+
+    const_iterator begin() const
+    {
+        return const_iterator(_Base::begin());
+    }
+
+    iterator end()
+    {
+        return iterator(_Base::end());
+    }
+
+    const_iterator end() const
+    {
+        return const_iterator(_Base::end());
+    }
 
 #if (CUDART_VERSION >= 2020)
     /**
