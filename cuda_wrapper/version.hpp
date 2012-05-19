@@ -1,6 +1,5 @@
-/* cuda_wrapper/version.hpp
- *
- * Copyright (C) 2009  Peter Colberg
+/*
+ * Copyright © 2009, 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_VERSION_HPP
-#define CUDA_VERSION_HPP
+#ifndef CUDA_WRAPPER_VERSION_HPP
+#define CUDA_WRAPPER_VERSION_HPP
 
 #include <cuda_runtime.h>
 
@@ -27,20 +26,30 @@
 
 namespace cuda {
 
-#if (CUDART_VERSION >= 2020)
+#if CUDART_VERSION >= 2020
 
 /**
- * returns CUDA runtime library version
+ * Returns version number of CUDA driver library.
  */
-inline int version()
+inline int driver_version()
 {
-    int v;
-    CUDA_CALL(cudaRuntimeGetVersion(&v));
-    return v;
+    int version;
+    CUDA_CALL(cudaDriverGetVersion(&version));
+    return version;
+}
+
+/**
+ * Returns version number of CUDA runtime library.
+ */
+inline int runtime_version()
+{
+    int version;
+    CUDA_CALL(cudaRuntimeGetVersion(&version));
+    return version;
 }
 
 #endif /* CUDART_VERSION >= 2020 */
 
 } // namespace cuda
 
-#endif /* ! CUDA_VERSION_HPP */
+#endif /* ! CUDA_WRAPPER_VERSION_HPP */

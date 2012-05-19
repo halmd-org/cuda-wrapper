@@ -49,7 +49,6 @@
 # include <cuda_wrapper/driver/context.hpp>
 # include <cuda_wrapper/driver/error.hpp>
 # include <cuda_wrapper/driver/mem.hpp>
-# include <cuda_wrapper/driver/version.hpp>
 #endif
 
 /*
