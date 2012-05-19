@@ -45,12 +45,6 @@
 # include <cuda_wrapper/version.hpp>
 #endif /* ! __CUDACC__ */
 
-#if !defined(__CUDACC__)
-# include <cuda_wrapper/driver/context.hpp>
-# include <cuda_wrapper/driver/error.hpp>
-# include <cuda_wrapper/driver/mem.hpp>
-#endif
-
 /*
  * C++ wrappers *not* requiring runtime functionality
  */
