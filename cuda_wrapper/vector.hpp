@@ -37,7 +37,9 @@ public:
     typedef vector<T> vector_type;
     typedef T value_type;
     typedef T* pointer;
+    typedef T* iterator;
     typedef T const* const_pointer;
+    typedef T const* const_iterator;
     typedef size_t size_type;
 
 private:
@@ -160,6 +162,26 @@ public:
     operator const_pointer() const
     {
         return *m_mem;
+    }
+
+    iterator begin()
+    {
+        return *m_mem;
+    }
+
+    const_iterator begin() const
+    {
+        return *m_mem;
+    }
+
+    iterator end()
+    {
+        return *m_mem + m_size;
+    }
+
+    const_iterator end() const
+    {
+        return *m_mem + m_size;
     }
 
 private:
