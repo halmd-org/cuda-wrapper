@@ -33,7 +33,7 @@
 
 #ifndef __CUDACC__
 # include <cuda_wrapper/allocator.hpp>
-# include <cuda_wrapper/copy.hpp>
+# include <cuda_wrapper/deprecated/copy.hpp>
 # include <cuda_wrapper/device.hpp>
 # include <cuda_wrapper/error.hpp>
 # include <cuda_wrapper/event.hpp>

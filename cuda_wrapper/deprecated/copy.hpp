@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_WRAPPER_COPY_HPP
-#define CUDA_WRAPPER_COPY_HPP
+#ifndef CUDA_WRAPPER_DEPRECATED_COPY_HPP
+#define CUDA_WRAPPER_DEPRECATED_COPY_HPP
 
 #include <assert.h>
 #include <boost/concept_check.hpp>
@@ -388,4 +388,4 @@ void memset(vector<T>& array, int const& value, size_t size)
 
 } // namespace cuda
 
-#endif /* ! CUDA_WRAPPER_COPY_HPP */
+#endif /* ! CUDA_WRAPPER_DEPRECATED_COPY_HPP */
