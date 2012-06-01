@@ -46,6 +46,10 @@ inline typename std::enable_if<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
     >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
+    >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
@@ -75,6 +79,10 @@ inline typename std::enable_if<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
     >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
+    >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
@@ -99,6 +107,10 @@ inline typename std::enable_if<
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
+    >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
     >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
@@ -133,6 +145,10 @@ inline typename std::enable_if<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
     >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
+    >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
@@ -160,6 +176,10 @@ inline typename std::enable_if<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
     >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
+    >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
@@ -183,6 +203,10 @@ inline typename std::enable_if<
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::host_random_access_iterator_tag
+    >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
     >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
@@ -210,6 +234,10 @@ inline typename std::enable_if<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::device_random_access_iterator_tag
     >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
+    >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
@@ -235,6 +263,10 @@ inline typename std::enable_if<
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , detail::host_random_access_iterator_tag
+    >::value
+    && std::is_same<
+        typename std::iterator_traits<InputIterator>::value_type
+      , typename std::iterator_traits<OutputIterator>::value_type
     >::value
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
