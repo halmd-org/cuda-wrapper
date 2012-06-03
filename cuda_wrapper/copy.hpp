@@ -24,7 +24,7 @@
 #include <iterator>
 #include <type_traits>
 
-#include <cuda_wrapper/detail/iterator_tag.hpp>
+#include <cuda_wrapper/iterator_category.hpp>
 #include <cuda_wrapper/stream.hpp>
 
 namespace cuda {
@@ -40,11 +40,11 @@ inline typename std::enable_if<
     >::value
     && !std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -69,7 +69,7 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
@@ -77,7 +77,7 @@ inline typename std::enable_if<
     >::value
     && !std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -102,11 +102,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -135,7 +135,7 @@ inline typename std::enable_if<
     >::value
     && !std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
@@ -143,7 +143,7 @@ inline typename std::enable_if<
     >::value
     && !std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -170,11 +170,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::host_random_access_iterator_tag
+      , host_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -198,11 +198,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::host_random_access_iterator_tag
+      , host_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -228,11 +228,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -258,11 +258,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , detail::host_random_access_iterator_tag
+      , host_random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::host_random_access_iterator_tag
+      , host_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -290,7 +290,7 @@ template <typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , detail::device_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
   , void>::type memset(OutputIterator first, OutputIterator last, unsigned char value)
 {

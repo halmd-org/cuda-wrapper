@@ -17,13 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_WRAPPER_DETAIL_ITERATOR_TAG_HPP
-#define CUDA_WRAPPER_DETAIL_ITERATOR_TAG_HPP
+#ifndef CUDA_WRAPPER_ITERATOR_CATEGORY_HPP
+#define CUDA_WRAPPER_ITERATOR_CATEGORY_HPP
 
 #include <iterator>
 
 namespace cuda {
-namespace detail {
 
 /**
  * Extend STL iterator with a memory tag.
@@ -41,7 +40,6 @@ struct device_random_access_iterator_tag : std::random_access_iterator_tag {};
  */
 struct host_random_access_iterator_tag : std::random_access_iterator_tag {};
 
-} // namespace detail
 } // namespace cuda
 
-#endif /* CUDA_WRAPPER_DETAIL_ITERATOR_TAG_HPP */
+#endif /* CUDA_WRAPPER_ITERATOR_CATEGORY_HPP */
