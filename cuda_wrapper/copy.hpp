@@ -38,10 +38,6 @@ inline typename std::enable_if<
         typename std::iterator_traits<InputIterator>::iterator_category
       , std::random_access_iterator_tag
     >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , device_random_access_iterator_tag
@@ -74,10 +70,6 @@ inline typename std::enable_if<
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
@@ -133,17 +125,9 @@ inline typename std::enable_if<
         typename std::iterator_traits<InputIterator>::iterator_category
       , std::random_access_iterator_tag
     >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , device_random_access_iterator_tag
     >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type

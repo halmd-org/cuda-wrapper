@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_WRAPPER_DETAIL_ITERATOR_CATEGORY_ADAPTOR_HPP
-#define CUDA_WRAPPER_DETAIL_ITERATOR_CATEGORY_ADAPTOR_HPP
+#ifndef CUDA_WRAPPER_DETAIL_RANDOM_ACCESS_ITERATOR_HPP
+#define CUDA_WRAPPER_DETAIL_RANDOM_ACCESS_ITERATOR_HPP
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/iterator_traits.hpp>
@@ -28,39 +28,41 @@ namespace cuda {
 namespace detail {
 
 /**
- * Iterator category adapter
+ * Random access iterator with given base iterator and category.
  */
 template <typename Iterator, typename Category>
-class iterator_category_adaptor
+class random_access_iterator
   : public boost::iterator_adaptor<
-        iterator_category_adaptor<Iterator, Category>
+        random_access_iterator<Iterator, Category>
       , Iterator
       , boost::use_default
-      , Category
+      , std::random_access_iterator_tag
     >
 {
 private:
     struct enabler {};  // a private type avoids misuse
 
 public:
-    iterator_category_adaptor()
-      : iterator_category_adaptor::iterator_adaptor_(0) {}
+    typedef Category iterator_category;
 
-    explicit iterator_category_adaptor(Iterator iterator)
-      : iterator_category_adaptor::iterator_adaptor_(iterator) {}
+    random_access_iterator()
+      : random_access_iterator::iterator_adaptor_(0) {}
+
+    explicit random_access_iterator(Iterator iterator)
+      : random_access_iterator::iterator_adaptor_(iterator) {}
 
     template <typename OtherIterator>
-    iterator_category_adaptor(
-        iterator_category_adaptor<OtherIterator, Category> const& other
+    random_access_iterator(
+        random_access_iterator<OtherIterator, Category> const& other
       , typename std::enable_if<
             std::is_convertible<OtherIterator, Iterator>::value
           , enabler
         >::type = enabler()
     )
-      : iterator_category_adaptor::iterator_adaptor_(other.base()) {}
+      : random_access_iterator::iterator_adaptor_(other.base()) {}
 };
 
 } // namespace detail
 } // namespace cuda
 
-#endif /* CUDA_WRAPPER_DETAIL_ITERATOR_CATEGORY_ADAPTOR_HPP */
+#endif /* CUDA_WRAPPER_DETAIL_RANDOM_ACCESS_ITERATOR_HPP */

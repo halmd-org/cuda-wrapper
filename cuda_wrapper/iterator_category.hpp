@@ -32,11 +32,18 @@ namespace cuda {
 
 /**
  * Global device memory.
+ *
+ * This category does not derive from std::random_access_iterator_tag,
+ * which avoids breaking host algorithms that do not and should not
+ * check that the category of an iterator is not convertible to
+ * cuda::device_random_access_iterator_tag.
  */
-struct device_random_access_iterator_tag : std::random_access_iterator_tag {};
+struct device_random_access_iterator_tag {};
 
 /**
  * Page-locked host memory.
+ *
+ * This category derives from std::random_access_iterator_tag.
  */
 struct host_random_access_iterator_tag : std::random_access_iterator_tag {};
 
