@@ -1,6 +1,5 @@
-/* CUDA page-locked host memory vector
- *
- * Copyright (C) 2007  Peter Colberg
+/*
+ * Copyright © 2007, 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,14 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUDA_HOST_VECTOR_HPP
-#define CUDA_HOST_VECTOR_HPP
-
-#include <vector>
+#ifndef CUDA_WRAPPER_HOST_VECTOR_HPP
+#define CUDA_WRAPPER_HOST_VECTOR_HPP
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
-#include <cuda_wrapper/iterator_category.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
+#include <cuda_wrapper/iterator_category.hpp>
+
+#include <vector>
 
 namespace cuda {
 namespace host {
@@ -34,15 +33,24 @@ namespace host {
  * CUDA page-locked host memory vector
  */
 template <typename T>
-class vector : public std::vector<T, allocator<T> >
+class vector
+  : public std::vector<T, allocator<T> >
 {
-public:
+private:
     typedef allocator<T> _Alloc;
     typedef std::vector<T, allocator<T> > _Base;
+
+public:
     typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
+    typedef typename _Base::pointer pointer;
+    typedef typename _Base::const_pointer const_pointer;
     typedef detail::random_access_iterator<typename _Base::iterator, host_random_access_iterator_tag> iterator;
     typedef detail::random_access_iterator<typename _Base::const_iterator, host_random_access_iterator_tag> const_iterator;
+#if CUDART_VERSION >= 2020
+    typedef detail::random_access_iterator<pointer, device_random_access_iterator_tag> device_iterator;
+    typedef detail::random_access_iterator<const_pointer, device_random_access_iterator_tag> const_device_iterator;
+#endif
 
 public:
     /** creates an empty vector */
@@ -53,47 +61,102 @@ public:
     template <class InputIterator>
     vector(InputIterator begin, InputIterator end, _Alloc const& alloc = _Alloc()) : _Base(begin, end, alloc) {}
 
+    /**
+     * Returns host iterator to the first element of the array.
+     */
     iterator begin()
     {
         return iterator(_Base::begin());
     }
 
+    /**
+     * Returns host iterator to the first element of the array.
+     */
     const_iterator begin() const
     {
         return const_iterator(_Base::begin());
     }
 
+    /**
+     * Returns host iterator to the element following the last element of the array.
+     */
     iterator end()
     {
         return iterator(_Base::end());
     }
 
+    /**
+     * Returns host iterator to the element following the last element of the array.
+     */
     const_iterator end() const
     {
         return const_iterator(_Base::end());
     }
 
-#if (CUDART_VERSION >= 2020)
+#if CUDART_VERSION >= 2020
     /**
-     * returns device pointer to page-locked host memory
+     * Returns device iterator to the first element of the array.
+     *
+     * This is needed for backwards-compatibility with devices of compute
+     * capability 1.1 or lower. Devices of compute capability support
+     * unified addressing, i.e. a pointer to page-locked host memory
+     * is usable both on the device and the host.
      */
-    operator value_type*()
+    device_iterator gbegin()
     {
-        void* ptr = NULL;
-        CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
-        return reinterpret_cast<value_type*>(ptr);
+        pointer p = nullptr;
+        CUDA_CALL( cudaHostGetDevicePointer(&p, &*_Base::begin(), 0) );
+        return device_iterator(p);
     }
 
-    operator value_type const*() const
+    /**
+     * Returns device iterator to the first element of the array.
+     *
+     * This is needed for backwards-compatibility with devices of compute
+     * capability 1.1 or lower. Devices of compute capability support
+     * unified addressing, i.e. a pointer to page-locked host memory
+     * is usable both on the device and the host.
+     */
+    const_device_iterator gbegin() const
     {
-        void* ptr = NULL;
-        CUDA_CALL(cudaHostGetDevicePointer(&ptr, _Base::data(), 0));
-        return reinterpret_cast<value_type const*>(ptr);
+        const_pointer p = nullptr;
+        CUDA_CALL( cudaHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0) );
+        return const_device_iterator(p);
     }
-#endif
+
+    /**
+     * Returns device iterator to the element following the last element of the array.
+     *
+     * This is needed for backwards-compatibility with devices of compute
+     * capability 1.1 or lower. Devices of compute capability support
+     * unified addressing, i.e. a pointer to page-locked host memory
+     * is usable both on the device and the host.
+     */
+    device_iterator gend()
+    {
+        pointer p = nullptr;
+        CUDA_CALL( cudaHostGetDevicePointer(&p, &*_Base::begin(), 0) );
+        return device_iterator(p + _Base::size());
+    }
+
+    /**
+     * Returns device iterator to the element following the last element of the array.
+     *
+     * This is needed for backwards-compatibility with devices of compute
+     * capability 1.1 or lower. Devices of compute capability support
+     * unified addressing, i.e. a pointer to page-locked host memory
+     * is usable both on the device and the host.
+     */
+    const_device_iterator gend() const
+    {
+        const_pointer p = nullptr;
+        CUDA_CALL( cudaHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0) );
+        return const_device_iterator(p + _Base::size());
+    }
+#endif /* CUDART_VERSION >= 2020 */
 };
 
 } // namespace host
 } // namespace cuda
 
-#endif /* ! CUDA_HOST_VECTOR_HPP */
+#endif /* ! CUDA_WRAPPER_HOST_VECTOR_HPP */
