@@ -26,13 +26,60 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
+struct set_map_host {
+    set_map_host()
+    {
+        CUDA_CALL( cudaSetDeviceFlags(cudaDeviceMapHost) );
+    }
+};
+
+BOOST_GLOBAL_FIXTURE( set_map_host )
+
+/**
+ * test mapping of page-locked host memory into device memory
+ *
+ * use calls to CUDA library without referencing cuda_wrapper
+ */
+BOOST_AUTO_TEST_CASE( mapped_host_memory_pure )
+{
+    int N = 10000;
+    size_t size = N * sizeof(int);
+
+    int* a_h; cudaHostAlloc((void **)&a_h, size, cudaHostAllocMapped);
+    int* a_d; cudaHostGetDevicePointer((void **)&a_d, (void *)a_h, 0);
+
+    for (int i = 0; i < N; ++i) {
+        a_h[i] = i;
+    }
+
+    BOOST_TEST_MESSAGE("device → device: copy mapped host memory to device-only memory");
+    int* b_d; cudaMalloc((void **)&b_d, size);
+    cudaMemcpy(b_d, a_d, size, cudaMemcpyDeviceToDevice);
+
+    BOOST_TEST_MESSAGE("device → host: copy device-only memory to conventional host memory");
+    int* b_h = (int*)malloc(size);
+    cudaMemcpy(b_h, b_d, size, cudaMemcpyDeviceToHost);
+
+    // check data integrity
+    BOOST_CHECK_EQUAL_COLLECTIONS( a_h, a_h + N, b_h, b_h + N );
+
+    BOOST_TEST_MESSAGE("device → host: copy mapped host memory from device to conventional host memory");
+    cudaMemcpy(b_h, a_d, size, cudaMemcpyDeviceToHost);
+
+    // check data integrity
+    BOOST_CHECK_EQUAL_COLLECTIONS( a_h, a_h + N, b_h, b_h + N );
+
+    // free memory
+    cudaFree(a_h);
+    cudaFree(b_d);
+    free(b_h);
+}
+
 /**
  * test mapping of page-locked host memory into device memory
  */
 BOOST_AUTO_TEST_CASE( mapped_host_memory )
 {
-    CUDA_CALL( cudaSetDeviceFlags(cudaDeviceMapHost) );
-
     BOOST_TEST_MESSAGE("allocate and fill page-locked host memory");
     cuda::host::vector<int> h_i(10000);
     std::copy(
