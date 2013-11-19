@@ -1,5 +1,6 @@
 /*
- * Copyright © 2007-2012  Peter Colberg
+ * Copyright © 2013      Felix Höfling
+ * Copyright © 2007-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -41,21 +42,21 @@ public:
     /**
      * type-safe constructor for CUDA host code
      */
-    texture(::texture<T, dim, mode> const& tex) : ref_(tex), desc_(tex.channelDesc) {}
+    texture(::texture<T, dim, mode> const& tex) : ptr_(&tex), desc_(tex.channelDesc) {}
 
     /**
      * variant constructor for CUDA host code
      *
      * For variant textures we need to override the channel desciptor.
      */
-    texture(::texture<void, dim, mode> const& tex) : ref_(tex), desc_(cudaCreateChannelDesc<T>()) {}
+    texture(::texture<void, dim, mode> const& tex) : ptr_(&tex), desc_(cudaCreateChannelDesc<T>()) {}
 #else /* ! __CUDACC__ */
     /**
      * bind CUDA texture to device memory array
      */
     void bind(cuda::vector<T> const& array) const
     {
-        CUDA_CALL(cudaBindTexture(NULL, &ref_, array.data(), &desc_));
+        CUDA_CALL(cudaBindTexture(NULL, ptr_, array.data(), &desc_));
     }
 
     /**
@@ -63,17 +64,16 @@ public:
      */
     void unbind() const
     {
-        CUDA_CALL(cudaUnbindTexture(&ref_));
+        CUDA_CALL(cudaUnbindTexture(ptr_));
     }
 #endif /* ! __CUDACC__ */
 
 private:
 #ifndef __CUDACC__
-    // provide dummy host constructor to avoid GCC 4.4 warning
-    texture() : ref_(textureReference()) {}
+    texture() : ptr_(NULL), desc_() {}
 #endif
 
-    textureReference const& ref_;
+    textureReference const* ptr_;
     cudaChannelFormatDesc const desc_;
 };
 
