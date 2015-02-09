@@ -21,6 +21,7 @@
 #define CUDA_WRAPPER_ITERATOR_CATEGORY_HPP
 
 #include <iterator>
+#include <boost/version.hpp>
 
 namespace cuda {
 
@@ -48,5 +49,16 @@ struct device_random_access_iterator_tag {};
 struct host_random_access_iterator_tag : std::random_access_iterator_tag {};
 
 } // namespace cuda
+
+#if BOOST_VERSION >= 105700
+#include <boost/type_traits/is_convertible.hpp>
+namespace boost {
+
+template<>
+struct is_convertible<cuda::device_random_access_iterator_tag, std::random_access_iterator_tag>
+  : public true_type {};
+
+}
+#endif // BOOST_VERSION >= 105700
 
 #endif /* CUDA_WRAPPER_ITERATOR_CATEGORY_HPP */
