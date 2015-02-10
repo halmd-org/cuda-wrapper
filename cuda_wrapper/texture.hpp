@@ -56,6 +56,7 @@ public:
      */
     void bind(cuda::vector<T> const& array) const
     {
+        ptr_->channelDesc = desc_;
         CUDA_CALL(cudaBindTexture(NULL, ptr_, array.data(), &desc_));
     }
 
@@ -73,7 +74,7 @@ private:
     texture() : ptr_(NULL), desc_() {}
 #endif
 
-    textureReference const* ptr_;
+    textureReference* ptr_;
     cudaChannelFormatDesc const desc_;
 };
 
