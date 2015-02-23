@@ -42,14 +42,14 @@ public:
     /**
      * type-safe constructor for CUDA host code
      */
-    texture(::texture<T, dim, mode> const& tex) : ptr_(&tex), desc_(tex.channelDesc) {}
+    texture(::texture<T, dim, mode>& tex) : ptr_(&tex), desc_(tex.channelDesc) {}
 
     /**
      * variant constructor for CUDA host code
      *
      * For variant textures we need to override the channel desciptor.
      */
-    texture(::texture<void, dim, mode> const& tex) : ptr_(&tex), desc_(cudaCreateChannelDesc<T>()) {}
+    texture(::texture<void, dim, mode>& tex) : ptr_(&tex), desc_(cudaCreateChannelDesc<T>()) {}
 #else /* ! __CUDACC__ */
     /**
      * bind CUDA texture to device memory array
