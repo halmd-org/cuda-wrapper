@@ -22,7 +22,8 @@
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/iterator_traits.hpp>
-#include <type_traits>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/utility/enable_if.hpp>
 
 namespace cuda {
 namespace detail {
@@ -36,7 +37,7 @@ class random_access_iterator
         random_access_iterator<Iterator, Category>
       , Iterator
       , boost::use_default
-      , std::random_access_iterator_tag
+      , boost::random_access_traversal_tag
     >
 {
 private:
@@ -54,8 +55,8 @@ public:
     template <typename OtherIterator>
     random_access_iterator(
         random_access_iterator<OtherIterator, Category> const& other
-      , typename std::enable_if<
-            std::is_convertible<OtherIterator, Iterator>::value
+      , typename boost::enable_if<
+            boost::is_convertible<OtherIterator, Iterator>
           , enabler
         >::type = enabler()
     )
