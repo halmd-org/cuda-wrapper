@@ -31,3 +31,15 @@ target_link_libraries(test_cuda_wrapper_copy
 add_test(cuda_wrapper/copy
   test_cuda_wrapper_copy --log_level=test_suite
 )
+
+add_executable(test_cuda_wrapper_host_vector
+  host_vector.cpp
+)
+target_link_libraries(test_cuda_wrapper_host_vector
+  ${CUDA_LIBRARIES}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  pthread
+)
+add_test(cuda_wrapper/host_vector
+  test_cuda_wrapper_host_vector --log_level=test_suite
+)
