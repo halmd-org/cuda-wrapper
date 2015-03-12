@@ -54,9 +54,9 @@ public:
 
 public:
     /** creates an empty vector */
-    vector(_Alloc const& alloc = _Alloc(cudaHostAllocMapped)) : _Base(alloc) {}
+    vector(_Alloc const& alloc = _Alloc()) : _Base(alloc) {}
     /** creates a vector with n elements */
-    vector(size_type n, T const& t = T(), _Alloc const& alloc = _Alloc(cudaHostAllocMapped)) : _Base(n, t, alloc) {}
+    vector(size_type n, T const& t = T(), _Alloc const& alloc = _Alloc()) : _Base(n, t, alloc) {}
     /** creates a vector with a copy of a range */
     template <class InputIterator>
     vector(InputIterator begin, InputIterator end, _Alloc const& alloc = _Alloc()) : _Base(begin, end, alloc) {}
