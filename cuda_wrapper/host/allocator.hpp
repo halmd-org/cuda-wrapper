@@ -1,11 +1,7 @@
 /* Allocator that wraps cudaMallocHost -*- C++ -*-
  *
- * Copyright (C) 2008  Peter Colberg
- *
- * This file is derived from ext/malloc_allocator.h of the
- * GNU Standard C++ Library, which wraps "C" malloc.
- *
- * Copyright (C) 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+ * Copyright (C) 2016 Felix Höfling
+ * Copyright (C) 2008 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -29,6 +25,7 @@
 #include <bits/functexcept.h>
 #include <cstdlib>
 #include <cuda_runtime.h>
+#include <limits>
 #include <new>
 
 #include <cuda_wrapper/error.hpp>
@@ -39,106 +36,85 @@ namespace host {
 using std::size_t;
 using std::ptrdiff_t;
 
+/*
+ * The implementation of a custom allocator class for the STL is described
+ * here and there:
+ * http://www.codeproject.com/Articles/4795/C-Standard-Allocator-An-Introduction-and-Implement
+ * http://stackoverflow.com/a/11417774
+ *
+ * The same pattern is used in ext/malloc_allocator.h of the GNU Standard C++
+ * Library, which wraps "C" malloc.
+ */
 
-template<typename _Tp>
-class allocator
-{
+template <typename T>
+class allocator {
 public:
-    typedef size_t     size_type;
-    typedef ptrdiff_t  difference_type;
-    typedef _Tp*       pointer;
-    typedef const _Tp* const_pointer;
-    typedef _Tp&       reference;
-    typedef const _Tp& const_reference;
-    typedef _Tp        value_type;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T value_type;
 
-    template<typename _Tp1>
-    struct rebind
+    template <typename U> struct rebind { typedef allocator<U> other; };
+
+    allocator(unsigned int flags = cudaHostAllocDefault) throw() : _flags(flags) {}
+
+    allocator(const allocator& alloc) throw() : _flags(alloc._flags) {}
+
+    template<typename U>
+    allocator(const allocator<U>& alloc) throw() : _flags(alloc._flags) {}
+
+    pointer address(reference x) const { return &x; }
+    const_pointer address(const_reference x) const { return &x; }
+
+    pointer allocate(size_type s, void const* = 0)
     {
-        typedef allocator<_Tp1> other;
-    };
+        void* p;
 
-#if (CUDART_VERSION >= 2020)
-    allocator(unsigned int flags = cudaHostAllocDefault) throw() : _flags(flags) { }
+        if (__builtin_expect(s > this->max_size(), false))
+        {
+            throw std::bad_alloc();
+        }
 
-    allocator(const allocator& alloc) throw() : _flags(alloc._flags) { }
+        CUDA_CALL(cudaHostAlloc(&p, s * sizeof(T), _flags));
 
-    template<typename _Tp1>
-    allocator(const allocator<_Tp1>& alloc) throw() : _flags(alloc._flags) { }
-#else
-    allocator() throw() { }
-
-    allocator(const allocator&) throw() { }
-
-    template<typename _Tp1>
-    allocator(const allocator<_Tp1>&) throw() { }
-#endif
-
-    ~allocator() throw() { }
-
-    pointer address(reference __x) const
-    {
-        return &__x;
+        return reinterpret_cast<pointer>(p);
     }
 
-    const_pointer address(const_reference __x) const
+    void deallocate(pointer p, size_type) throw() // no no-throw guarantee (p may be a null pointer)
     {
-        return &__x;
-    }
-
-    // NB: __n is permitted to be 0.  The C++ standard says nothing
-    // about what the return value is when __n == 0.
-    pointer allocate(size_type __n, const void* = 0)
-    {
-        void* __ret;
-
-        if (__builtin_expect(__n > this->max_size(), false))
-            std::__throw_bad_alloc();
-
-#if (CUDART_VERSION >= 2020)
-        CUDA_CALL(cudaHostAlloc(&__ret, __n * sizeof(_Tp), _flags));
-#else
-        CUDA_CALL(cudaMallocHost(&__ret, __n * sizeof(_Tp)));
-#endif
-
-        return reinterpret_cast<pointer>(__ret);
-    }
-
-    // __p is not permitted to be a null pointer.
-    void deallocate(pointer __p, size_type) throw() // no-throw guarantee
-    {
-        cudaFreeHost(reinterpret_cast<void *>(__p));
+        cudaFreeHost(reinterpret_cast<void *>(p));
     }
 
     size_type max_size() const throw()
     {
-        return size_t(-1) / sizeof(_Tp);
+        return std::numeric_limits<size_t>::max() / sizeof(T);
     }
 
-    void construct(pointer __p, const _Tp& __val)
+    void construct(pointer p, const T& val)
     {
-        ::new(__p) value_type(__val);
+        ::new((void *)p) T(val);
     }
 
-    void destroy(pointer __p)
+    void destroy(pointer p)
     {
-        __p->~_Tp();
+        p->~T();
     }
 
 private:
-#if (CUDART_VERSION >= 2020)
     unsigned int _flags;
-#endif
 };
 
-template<typename _Tp>
-inline bool operator==(const allocator<_Tp>&, const allocator<_Tp>&)
+template<typename T>
+inline bool operator==(const allocator<T>&, const allocator<T>&)
 {
     return true;
 }
 
-template<typename _Tp>
-inline bool operator!=(const allocator<_Tp>&, const allocator<_Tp>&)
+template<typename T>
+inline bool operator!=(const allocator<T>&, const allocator<T>&)
 {
     return false;
 }
