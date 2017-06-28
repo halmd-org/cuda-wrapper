@@ -130,7 +130,12 @@
         typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
 
     public:
-        function(T* f) : f_(reinterpret_cast<char const*>(f)) {}
+        function(T* f) : f_(reinterpret_cast<char const*>(f)), maxBlockSize_(0), minGridSize_(0)
+        {
+    #if defined(__CUDACC__) && CUDART_VERSION >= 6500
+            cudaOccupancyMaxPotentialBlockSize(&minGridSize_, &maxBlockSize_, *f);
+    #endif
+        }
 
     #ifndef __CUDACC__
 
@@ -206,12 +211,24 @@
             return attr.sharedSizeBytes;
         }
 
+        int max_block_size() const
+        {
+            return maxBlockSize_;
+        }
+
+        int min_grid_size() const
+        {
+            return minGridSize_;
+        }
+
     #endif /* CUDART_VERSION >= 4010 */
 
     #endif /* ! __CUDACC__ */
 
     private:
         char const* f_;
+        int maxBlockSize_;
+        int minGridSize_;
     };
 
     } // namespace cuda
