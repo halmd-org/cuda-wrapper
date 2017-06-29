@@ -136,6 +136,13 @@
             cudaOccupancyMaxPotentialBlockSize(&minGridSize_, &maxBlockSize_, *f);
     #endif
         }
+        template<typename SMemSizeFun>
+        function(T* f, SMemSizeFun fun) : f_(reinterpret_cast<const char*>(f)), maxBlockSize_(0), minGridSize_(0)
+        {
+    #if defined(__CUDACC__) && CUDART_VERSION >= 6500
+            cudaOccupancyMaxPotentialBlockSizeVariableSMem(&minGridSize_, &maxBlockSize_, *f, fun);
+    #endif
+        }
 
     #ifndef __CUDACC__
 
