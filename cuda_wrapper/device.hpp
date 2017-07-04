@@ -16,6 +16,14 @@
 
 #include <cuda_wrapper/error.hpp>
 
+// workaround for warnings with GCC 7
+#ifdef minor
+# undef minor
+#endif
+#ifdef major
+# undef major
+#endif
+
 namespace cuda {
 
 /**
