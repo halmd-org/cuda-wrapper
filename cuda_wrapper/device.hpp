@@ -211,6 +211,15 @@ public:
             return prop.multiProcessorCount;
         }
 #endif /* CUDART_VERSION >= 2000 */
+#if (CUDART_VERSION >= 4000)
+        /**
+         * maximum resident threads per multiprocessor
+         */
+        int max_threads_per_multi_processor() const
+        {
+            return prop.maxThreadsPerMultiProcessor;
+        }
+#endif /* CUDART_VERSION >= 4000 */
     };
 };
 
