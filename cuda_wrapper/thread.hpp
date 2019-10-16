@@ -16,6 +16,9 @@
 #define CUDA_THREAD_HPP
 
 #include <cuda_runtime.h>
+#ifndef NDEBUG
+# include <cuda_profiler_api.h>
+#endif
 
 #include <cuda_wrapper/error.hpp>
 
@@ -37,6 +40,9 @@ public:
      */
     static void exit()
     {
+#ifndef NDEBUG
+        CUDA_CALL(cudaProfilerStop());      // flush profiling buffers
+#endif
         CUDA_CALL(cudaThreadExit());
     }
 };
