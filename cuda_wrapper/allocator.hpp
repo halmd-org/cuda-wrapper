@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -12,11 +13,10 @@
 #ifndef CUDA_ALLOCATOR_HPP
 #define CUDA_ALLOCATOR_HPP
 
-#include <bits/functexcept.h>
-#include <cstdlib>
-#include <cuda_runtime.h>
 #include <limits>
 #include <new>
+
+#include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 
@@ -46,6 +46,7 @@ struct allocator {
     typedef T value_type;
 
     template <typename U> struct rebind { typedef allocator<U> other; };
+
     allocator() throw() {}
     allocator(const allocator&) throw() {}
 
@@ -58,21 +59,22 @@ struct allocator {
 
     pointer allocate(size_type s, void const* = 0)
     {
-        void* p;
+        CUdeviceptr p;
 
+        if (s == 0)
+            return NULL;
         if (__builtin_expect(s > this->max_size(), false))
-        {
             throw std::bad_alloc();
-        }
 
-        CUDA_CALL(cudaMalloc(&p, s * sizeof(T)));
+        CU_CALL(cuMemAlloc(&p, s * sizeof(T)));
 
         return reinterpret_cast<pointer>(p);
     }
 
-    void deallocate(pointer p, size_type) throw() // no no-throw guarantee (p may be a null pointer)
+    void deallocate(pointer p, size_type) throw() // no-throw guarantee
     {
-        cudaFree(reinterpret_cast<void *>(p));
+        if (p != NULL)
+            cuMemFree(reinterpret_cast<CUdeviceptr>(p));
     }
 
     size_type max_size() const throw()

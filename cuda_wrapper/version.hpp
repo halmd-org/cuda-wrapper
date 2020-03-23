@@ -1,5 +1,6 @@
 /*
- * Copyright © 2009, 2012 Peter Colberg
+ * Copyright (C) 2009, 2012 Peter Colberg
+ * Copyright (C) 2020       Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -10,6 +11,7 @@
 #ifndef CUDA_WRAPPER_VERSION_HPP
 #define CUDA_WRAPPER_VERSION_HPP
 
+#include <cuda.h>
 #include <cuda_runtime.h>
 
 #include <cuda_wrapper/error.hpp>
@@ -19,12 +21,12 @@ namespace cuda {
 #if CUDART_VERSION >= 2020
 
 /**
- * Returns version number of CUDA driver library.
+ * Returns latest version of CUDA supported by the driver.
  */
 inline int driver_version()
 {
     int version;
-    CUDA_CALL(cudaDriverGetVersion(&version));
+    CU_CALL(cuDriverGetVersion(&version));
     return version;
 }
 

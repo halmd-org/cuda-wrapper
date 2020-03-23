@@ -32,6 +32,8 @@
 # include <cuda_runtime.h>
 #endif
 
+#include <cuda.h>
+
 /*
  * C++ wrappers requiring runtime functionality (e.g. exceptions)
  */

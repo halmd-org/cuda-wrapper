@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -12,11 +13,9 @@
 #ifndef CUDA_HOST_ALLOCATOR_HPP
 #define CUDA_HOST_ALLOCATOR_HPP
 
-#include <bits/functexcept.h>
-#include <cstdlib>
-#include <cuda_runtime.h>
 #include <limits>
-#include <new>
+
+#include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 
@@ -49,12 +48,13 @@ public:
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator(unsigned int flags = cudaHostAllocDefault) throw() : _flags(flags) {}
-
+    allocator(unsigned int flags = 0) throw() : _flags(flags) {}
     allocator(const allocator& alloc) throw() : _flags(alloc._flags) {}
 
     template<typename U>
     allocator(const allocator<U>& alloc) throw() : _flags(alloc._flags) {}
+
+    ~allocator() throw() {}
 
     pointer address(reference x) const { return &x; }
     const_pointer address(const_reference x) const { return &x; }
@@ -68,14 +68,14 @@ public:
             throw std::bad_alloc();
         }
 
-        CUDA_CALL(cudaHostAlloc(&p, s * sizeof(T), _flags));
+        CU_CALL(cuMemHostAlloc(&p, s * sizeof(T), _flags));
 
         return reinterpret_cast<pointer>(p);
     }
 
-    void deallocate(pointer p, size_type) throw() // no no-throw guarantee (p may be a null pointer)
+    void deallocate(pointer p, size_type) throw() // no-throw guarantee
     {
-        cudaFreeHost(reinterpret_cast<void *>(p));
+        cuMemFreeHost(reinterpret_cast<void *>(p));
     }
 
     size_type max_size() const throw()

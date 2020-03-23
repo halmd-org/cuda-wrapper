@@ -1,6 +1,7 @@
 /* cuda_wrapper/error.hpp
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -15,18 +16,27 @@
 #ifndef CUDA_ERROR_HPP
 #define CUDA_ERROR_HPP
 
-#include <cuda_runtime.h>
 #include <exception>
 
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #define CUDA_ERROR(err) throw cuda::error(err)
 
-#define CUDA_CALL(x)                                                        \
-    do {                                                                \
-        cudaError_t err;                                                \
-        if (cudaSuccess != (err = x)) {                                        \
-            CUDA_ERROR(err);                                                \
-        }                                                                \
+#define CUDA_CALL(x)                                                           \
+    do {                                                                       \
+        if (static_cast<cudaError_t>(x) != cudaSuccess) {                      \
+            CUDA_ERROR(x);                                                     \
+        }                                                                      \
+    } while(0)
+
+#define CU_ERROR(res) throw cuda::error(res)
+
+#define CU_CALL(x)                                                             \
+    do {                                                                       \
+        if (static_cast<CUresult>(x) != CUDA_SUCCESS) {                        \
+            CU_ERROR(x);                                                       \
+        }                                                                      \
     } while(0)
 
 
@@ -38,19 +48,25 @@ namespace cuda {
 class error : public std::exception
 {
 public:
-    /* CUDA error */
-    const cudaError_t err;
+    /* CUDA runtime or CUDA driver error */
+    const int err;
+    const bool runtime;
 
-    error(cudaError_t err): err(err)
-    {
-    }
+    error(cudaError_t err) : err(err), runtime(true) {}
+    error(CUresult err): err(err), runtime(false) {}
 
     /*
-     * returns a message string for the CUDA error
+     * returns a message string for either CUDA runtime or CUDA driver error
      */
-    const char* what() const throw()
+    const char *what() const throw()
     {
-        return cudaGetErrorString(err);
+        if (runtime)
+            return cudaGetErrorString(static_cast<cudaError_t>(err));
+        else {
+            const char *str;
+            cuGetErrorString(static_cast<CUresult>(err), &str);
+            return str;
+        }
     }
 };
 

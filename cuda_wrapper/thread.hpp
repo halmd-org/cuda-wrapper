@@ -1,6 +1,7 @@
 /* cuda_wrapper/thread.hpp
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -15,38 +16,22 @@
 #ifndef CUDA_THREAD_HPP
 #define CUDA_THREAD_HPP
 
-#include <cuda_runtime.h>
-#ifndef NDEBUG
-# include <cuda_profiler_api.h>
-#endif
+#include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda {
+namespace thread {
 
-class thread
+/*
+ * blocks until the device has completed all preceding requested tasks
+ */
+inline void synchronize()
 {
-public:
-    /*
-     * blocks until the device has completed all preceding requested tasks
-     */
-    static void synchronize()
-    {
-        CUDA_CALL(cudaThreadSynchronize());
-    }
+    CU_CALL(cuCtxSynchronize());
+}
 
-    /*
-     * cleans up all runtime-related resources associated with calling thread
-     */
-    static void exit()
-    {
-#ifndef NDEBUG
-        CUDA_CALL(cudaProfilerStop());      // flush profiling buffers
-#endif
-        CUDA_CALL(cudaThreadExit());
-    }
-};
-
+} // namespace thread
 } // namespace cuda
 
 #endif /* ! CUDA_THREAD_HPP */

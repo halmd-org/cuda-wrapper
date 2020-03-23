@@ -1,6 +1,7 @@
 /* CUDA device symbol
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -33,9 +34,7 @@ public:
     /**
      * initialize device symbol constant
      */
-    symbol(value_type const& symbol)
-      : ptr_(&symbol)
-    {}
+    symbol(value_type const& symbol) : ptr_(&symbol) {}
 
     /**
      * return element count of device symbol
@@ -53,11 +52,28 @@ public:
         return ptr_;
     }
 
+#ifndef __CUDACC__
+    /**
+     * copy from host value to device symbol
+     */
+    void set(const T& src) const
+    {
+        CUDA_CALL(cudaMemcpyToSymbol(ptr_, &src, sizeof(T), 0, cudaMemcpyHostToDevice));
+    }
+
+    /**
+     * copy from device symbol to host value
+     */
+    void get(T& dst) const
+    {
+        CUDA_CALL(cudaMemcpyFromSymbol(&dst, ptr_, sizeof(T), 0, cudaMemcpyDeviceToHost));
+    }
+#endif
+
 private:
     /** device symbol pointer */
     value_type const* ptr_;
 };
-
 
 /**
  * CUDA device symbol vector
@@ -73,11 +89,7 @@ public:
     /**
      * initialize device symbol vector
      */
-    template <typename Array>
-    symbol(Array const& array)
-      : ptr_(array)
-      , size_(sizeof(array) / sizeof(value_type))
-    {}
+    symbol(const T* array) : ptr_(array) , size_(sizeof(array) / sizeof(value_type)) {}
 
     /**
      * return element count of device symbol
@@ -94,6 +106,24 @@ public:
     {
         return ptr_;
     }
+
+#ifndef __CUDACC__
+    /**
+     * copy from host memory area to device symbol
+     */
+    void set(const T* src) const
+    {
+        CUDA_CALL(cudaMemcpyToSymbol(ptr_, src, size_ * sizeof(T), 0, cudaMemcpyHostToDevice));
+    }
+
+    /**
+     * copy from device symbol to host memory area
+     */
+    void get(T* dst) const
+    {
+        CUDA_CALL(cudaMemcpyFromSymbol(dst, ptr_, size_ * sizeof(T), 0, cudaMemcpyDeviceToHost));
+    }
+#endif
 
 private:
     /** device symbol pointer */

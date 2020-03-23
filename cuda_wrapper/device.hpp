@@ -1,6 +1,7 @@
 /* cuda_wrapper/device.hpp
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
+ * Copyright (C) 2007 Peter Colberg
  *
  * This file is part of cuda-wrapper.
  *
@@ -11,8 +12,13 @@
 #ifndef CUDA_DEVICE_HPP
 #define CUDA_DEVICE_HPP
 
-#include <cuda_runtime.h>
 #include <string>
+
+#include <cuda.h>
+#include <cuda_runtime.h> // for dim3
+#ifndef NDEBUG
+# include <cudaProfiler.h>
+#endif
 
 #include <cuda_wrapper/error.hpp>
 
@@ -31,33 +37,87 @@ namespace cuda {
  */
 class device
 {
+private:
+    int ordinal = -1;
+    CUdevice dev;
+
 public:
+    device()
+    {
+        CU_CALL(cuInit(0));
+    }
+
+    ~device() throw() // no-throw guarantee
+    {
+        // just like remove, but non-throwing
+        if (ordinal >= 0) {
+            cuCtxPopCurrent(NULL);
+            cuDevicePrimaryCtxRelease(dev);
+        }
+    }
+
     /**
      * returns number of devices available for execution
      */
     static int count()
     {
         int count;
-        CUDA_CALL(cudaGetDeviceCount(&count));
+        CU_CALL(cuDeviceGetCount(&count));
         return count;
     }
 
     /**
      * set device on which the active host thread executes device code
      */
-    static void set(int dev)
+    void set(int num)
     {
-        CUDA_CALL(cudaSetDevice(dev));
+        // return immediately if device is the same as before
+        if (num == ordinal)
+            return;
+        // remove old device (if necessary)
+        remove();
+
+        CUcontext ctx;
+        CU_CALL(cuDeviceGet(&dev, num));
+        CU_CALL(cuDevicePrimaryCtxRetain(&ctx, dev));
+        CU_CALL(cuCtxPushCurrent(ctx));
+
+        ordinal = num;
+    }
+
+    /*
+     * remove the current device
+     */
+    void remove()
+    {
+        if (ordinal >= 0) {
+            CU_CALL(cuCtxPopCurrent(NULL));
+            CU_CALL(cuDevicePrimaryCtxRelease(dev));
+            ordinal = -1;
+        }
     }
 
     /**
      * get device on which the active host thread executes device code
      */
-    static int get()
+    int get() const
     {
-        int dev;
-        CUDA_CALL(cudaGetDevice(&dev));
-        return dev;
+        return ordinal;
+    }
+
+    /*
+     * cleans up all runtime-related resources associated with calling thread
+     */
+    void reset()
+    {
+#ifndef NDEBUG
+        CU_CALL(cuProfilerStop()); // flush profiling buffers
+#endif
+        // only call remove if device was set before
+        if (ordinal >= 0) {
+            CU_CALL(cuDevicePrimaryCtxReset(dev));
+            ordinal = -1;
+        }
     }
 
     /**
@@ -66,20 +126,26 @@ public:
     class properties
     {
     private:
-        cudaDeviceProp prop;
+        /*
+         * retrieve the information of attribute attr
+         */
+        int get_attribute(CUdevice_attribute attr) const
+        {
+            int num;
+            CU_CALL(cuDeviceGetAttribute(&num, attr, dev));
+            return num;
+        }
+
+        const static size_t BUFFER_NAME_LENGTH = 100;
+        CUdevice dev;
 
     public:
         /**
-         * empty initializer
-         */
-        properties() {}
-
-        /**
          * retrieve properties of given device
          */
-        properties(int dev)
+        properties(int ordinal)
         {
-            CUDA_CALL(cudaGetDeviceProperties(&prop, dev));
+            CU_CALL(cuDeviceGet(&dev, ordinal));
         }
 
         /**
@@ -87,7 +153,9 @@ public:
          */
         std::string name() const
         {
-            return prop.name;
+            char name[BUFFER_NAME_LENGTH];
+            CU_CALL(cuDeviceGetName(name, BUFFER_NAME_LENGTH, dev));
+            return name;
         }
 
         /**
@@ -95,7 +163,9 @@ public:
          */
         size_t total_global_mem() const
         {
-            return prop.totalGlobalMem;
+            size_t num;
+            CU_CALL(cuDeviceTotalMem(&num, dev));
+            return num;
         }
 
         /**
@@ -103,7 +173,7 @@ public:
          */
         size_t shared_mem_per_block() const
         {
-            return prop.sharedMemPerBlock;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK);
         }
 
         /**
@@ -111,7 +181,7 @@ public:
          */
         size_t regs_per_block() const
         {
-            return prop.regsPerBlock;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK);
         }
 
         /**
@@ -119,7 +189,7 @@ public:
          */
         size_t warp_size() const
         {
-            return prop.warpSize;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_WARP_SIZE);
         }
 
         /**
@@ -127,7 +197,7 @@ public:
          */
         size_t mem_pitch() const
         {
-            return prop.memPitch;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_PITCH);
         }
 
         /**
@@ -135,7 +205,7 @@ public:
          */
         unsigned int max_threads_per_block() const
         {
-            return prop.maxThreadsPerBlock;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK);
         }
 
         /**
@@ -143,7 +213,10 @@ public:
          */
         dim3 max_threads_dim() const
         {
-            return dim3(prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+            int x = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X);
+            int y = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y);
+            int z = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z);
+            return dim3(x, y, z);
         }
 
         /**
@@ -151,7 +224,10 @@ public:
          */
         dim3 max_grid_size() const
         {
-            return dim3(prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+            int x = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X);
+            int y = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Y);
+            int z = get_attribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Z);
+            return dim3(x, y, z);
         }
 
         /**
@@ -159,7 +235,7 @@ public:
          */
         size_t total_const_mem() const
         {
-            return prop.totalConstMem;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY);
         }
 
         /**
@@ -167,7 +243,7 @@ public:
          */
         unsigned int major() const
         {
-            return prop.major;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
         }
 
         /**
@@ -175,7 +251,7 @@ public:
          */
         unsigned int minor() const
         {
-            return prop.minor;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR);
         }
 
         /**
@@ -183,7 +259,7 @@ public:
          */
         unsigned int clock_rate() const
         {
-            return prop.clockRate;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_CLOCK_RATE);
         }
 
         /**
@@ -191,7 +267,7 @@ public:
          */
         size_t texture_alignment() const
         {
-            return prop.textureAlignment;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT);
         }
 
 #if (CUDART_VERSION >= 2000)
@@ -200,7 +276,7 @@ public:
          */
         int device_overlap() const
         {
-            return prop.deviceOverlap;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_GPU_OVERLAP);
         }
 
         /**
@@ -208,16 +284,16 @@ public:
          */
         int multi_processor_count() const
         {
-            return prop.multiProcessorCount;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT);
         }
 #endif /* CUDART_VERSION >= 2000 */
 #if (CUDART_VERSION >= 4000)
         /**
          * maximum resident threads per multiprocessor
          */
-        int max_threads_per_multi_processor() const
+        size_t max_threads_per_multi_processor() const
         {
-            return prop.maxThreadsPerMultiProcessor;
+            return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR);
         }
 #endif /* CUDART_VERSION >= 4000 */
     };

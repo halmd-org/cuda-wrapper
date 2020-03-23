@@ -1,5 +1,6 @@
 /*
- * Copyright © 2007, 2012 Peter Colberg
+ * Copyright (C) 2007, 2012 Peter Colberg
+ * Copyright (C) 2020       Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -10,11 +11,13 @@
 #ifndef CUDA_WRAPPER_HOST_VECTOR_HPP
 #define CUDA_WRAPPER_HOST_VECTOR_HPP
 
+#include <vector>
+
+#include <cuda.h>
+
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
 #include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
-
-#include <vector>
 
 namespace cuda {
 namespace host {
@@ -37,7 +40,7 @@ public:
     typedef typename _Base::const_pointer const_pointer;
     typedef detail::random_access_iterator<typename _Base::iterator, host_random_access_iterator_tag> iterator;
     typedef detail::random_access_iterator<typename _Base::const_iterator, host_random_access_iterator_tag> const_iterator;
-#if CUDART_VERSION >= 2020
+#if CUDA_VERSION >= 2020
     typedef detail::random_access_iterator<pointer, device_random_access_iterator_tag> device_iterator;
     typedef detail::random_access_iterator<const_pointer, device_random_access_iterator_tag> const_device_iterator;
 #endif
@@ -83,7 +86,7 @@ public:
         return const_iterator(_Base::end());
     }
 
-#if CUDART_VERSION >= 2020
+#if CUDA_VERSION >= 2020
     /**
      * Returns device iterator to the first element of the array.
      *
@@ -94,9 +97,9 @@ public:
      */
     device_iterator gbegin()
     {
-        pointer p = nullptr;
-        CUDA_CALL( cudaHostGetDevicePointer(&p, &*_Base::begin(), 0) );
-        return device_iterator(p);
+        CUdeviceptr p;
+        CU_CALL(cuMemHostGetDevicePointer(&p, &*_Base::begin(), 0));
+        return device_iterator(static_cast<pointer>(p));
     }
 
     /**
@@ -109,9 +112,9 @@ public:
      */
     const_device_iterator gbegin() const
     {
-        const_pointer p = nullptr;
-        CUDA_CALL( cudaHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0) );
-        return const_device_iterator(p);
+        CUdeviceptr p;
+        CU_CALL(cuMemHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0));
+        return const_device_iterator(static_cast<const_pointer>(p));
     }
 
     /**
@@ -124,9 +127,9 @@ public:
      */
     device_iterator gend()
     {
-        pointer p = nullptr;
-        CUDA_CALL( cudaHostGetDevicePointer(&p, &*_Base::begin(), 0) );
-        return device_iterator(p + _Base::size());
+        CUdeviceptr p;
+        CU_CALL(cuMemHostGetDevicePointer(&p, &*_Base::begin(), 0));
+        return device_iterator(static_cast<pointer>(p) + _Base::size());
     }
 
     /**
@@ -139,11 +142,11 @@ public:
      */
     const_device_iterator gend() const
     {
-        const_pointer p = nullptr;
-        CUDA_CALL( cudaHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0) );
-        return const_device_iterator(p + _Base::size());
+        CUdeviceptr p;
+        CU_CALL(cuMemHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0));
+        return const_device_iterator(static_cast<const_pointer>(p) + _Base::size());
     }
-#endif /* CUDART_VERSION >= 2020 */
+#endif /* CUDA_VERSION >= 2020 */
 };
 
 } // namespace host

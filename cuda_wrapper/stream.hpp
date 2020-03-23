@@ -13,13 +13,14 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
-#include <cuda_runtime.h>
+
+#include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda {
 
-#if (CUDART_VERSION >= 1010)
+#if (CUDA_VERSION >= 1010)
 
 /**
  * CUDA stream wrapper class
@@ -34,7 +35,7 @@ private:
          */
         container()
         {
-            CUDA_CALL(cudaStreamCreate(&m_stream));
+            CU_CALL(cuStreamCreate(&m_stream, CU_STREAM_DEFAULT));
         }
 
         /**
@@ -42,10 +43,10 @@ private:
          */
         ~container() throw() // no-throw guarantee
         {
-            cudaStreamDestroy(m_stream);
+            cuStreamDestroy(m_stream);
         }
 
-        cudaStream_t m_stream;
+        CUstream m_stream;
     };
 
 public:
@@ -59,7 +60,7 @@ public:
      */
     void synchronize()
     {
-        CUDA_CALL(cudaStreamSynchronize(m_stream->m_stream));
+        CU_CALL(cuStreamSynchronize(m_stream->m_stream));
     }
 
     /**
@@ -69,18 +70,19 @@ public:
      */
     bool query()
     {
-        cudaError_t err = cudaStreamQuery(m_stream->m_stream);
-        if (cudaSuccess == err)
+        CUresult res = cuStreamQuery(m_stream->m_stream);
+        if (res == CUDA_SUCCESS)
             return true;
-        else if (cudaErrorNotReady == err)
+        else if (res == CUDA_ERROR_NOT_READY)
             return false;
-        CUDA_ERROR(err);
+        else
+            CU_ERROR(res);
     }
 
     /**
      * returns stream
      */
-    cudaStream_t data() const
+    CUstream data() const
     {
         return m_stream->m_stream;
     }
@@ -89,7 +91,7 @@ private:
     boost::shared_ptr<container> m_stream;
 };
 
-#endif /* CUDART_VERSION >= 1010 */
+#endif /* CUDA_VERSION >= 1010 */
 
 } // namespace cuda
 

@@ -1,6 +1,7 @@
 /* CUDA global device memory vector
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -17,6 +18,7 @@
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
+#include <cuda_wrapper/allocator.hpp>
 
 namespace cuda {
 
@@ -44,12 +46,7 @@ private:
          */
         container(size_type size) : m_size(size), m_ptr(NULL)
         {
-            // avoid zero-size allocation with cudaMalloc
-            if (m_size) {
-                void* ptr;
-                CUDA_CALL(cudaMalloc(&ptr, m_size * sizeof(value_type)));
-                m_ptr = reinterpret_cast<pointer>(ptr);
-            }
+            m_ptr = allocator<value_type>().allocate(m_size);
         }
 
         /**
@@ -57,10 +54,7 @@ private:
          */
         ~container() throw()
         {
-            // avoid freeing NULL pointer with cudaFree
-            if (m_size) {
-                cudaFree(reinterpret_cast<void*>(m_ptr));
-            }
+            allocator<value_type>().deallocate(m_ptr, m_size);
         }
 
         size_type size() const

@@ -13,14 +13,15 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
-#include <cuda_runtime.h>
+
+#include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/stream.hpp>
 
 namespace cuda {
 
-#if (CUDART_VERSION >= 1010)
+#if (CUDA_VERSION >= 1010)
 
 /**
  * CUDA event wrapper class
@@ -35,7 +36,7 @@ private:
          */
         container()
         {
-            CUDA_CALL(cudaEventCreate(&m_event));
+            CU_CALL(cuEventCreate(&m_event, CU_EVENT_DEFAULT));
         }
 
 #if (CUDART_VERSION >= 2020)
@@ -44,7 +45,7 @@ private:
          */
         container(int flags)
         {
-            CUDA_CALL(cudaEventCreateWithFlags(&m_event, flags));
+            CU_CALL(cuEventCreate(&m_event, flags));
         }
 #endif
 
@@ -53,10 +54,10 @@ private:
          */
         ~container() throw() // no-throw guarantee
         {
-            cudaEventDestroy(m_event);
+            cuEventDestroy(m_event);
         }
 
-        cudaEvent_t m_event;
+        CUevent m_event;
     };
 
 public:
@@ -79,7 +80,7 @@ public:
      */
     void record()
     {
-        CUDA_CALL(cudaEventRecord(m_event->m_event, 0));
+        CU_CALL(cuEventRecord(m_event->m_event, 0));
     }
 
     /**
@@ -89,7 +90,7 @@ public:
      */
     void record(const stream& stream)
     {
-        CUDA_CALL(cudaEventRecord(m_event->m_event, stream.data()));
+        CU_CALL(cuEventRecord(m_event->m_event, stream.data()));
     }
 
     /**
@@ -97,7 +98,7 @@ public:
      */
     void synchronize()
     {
-        CUDA_CALL(cudaEventSynchronize(m_event->m_event));
+        CU_CALL(cuEventSynchronize(m_event->m_event));
     }
 
     /**
@@ -107,12 +108,12 @@ public:
      */
     bool query()
     {
-        cudaError_t err = cudaEventQuery(m_event->m_event);
-        if (cudaSuccess == err)
+        CUresult res = cuEventQuery(m_event->m_event);
+        if (res == CUDA_SUCCESS)
             return true;
-        else if (cudaErrorNotReady == err)
+        else if (res = CUDA_ERROR_NOT_READY)
             return false;
-        CUDA_ERROR(err);
+        CU_ERROR(res);
     }
 
     /**
@@ -123,14 +124,14 @@ public:
     float operator-(const event &start)
     {
         float time;
-        CUDA_CALL(cudaEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));
+        CU_CALL(cuEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));
         return (1.e-3f * time);
     }
 
     /**
      * returns event
      */
-    cudaEvent_t data() const
+    CUevent data() const
     {
         return m_event->m_event;
     }
@@ -139,7 +140,7 @@ private:
     boost::shared_ptr<container> m_event;
 };
 
-#endif /* CUDART_VERSION >= 1010 */
+#endif /* CUDA_VERSION >= 1010 */
 
 } // namespace cuda
 

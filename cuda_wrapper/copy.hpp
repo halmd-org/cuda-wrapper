@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010, 2012 Peter Colberg
+ * Copyright (C) 2008-2010, 2012 Peter Colberg
+ * Copyright (C) 2020            Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -10,12 +11,15 @@
 #ifndef CUDA_WRAPPER_COPY_HPP
 #define CUDA_WRAPPER_COPY_HPP
 
-#include <cuda_runtime.h>
 #include <iterator>
 #include <type_traits>
+#include <cstring>
+
+#include <cuda.h>
 
 #include <cuda_wrapper/iterator_category.hpp>
 #include <cuda_wrapper/stream.hpp>
+#include <cuda_wrapper/error.hpp>
 
 namespace cuda {
 
@@ -39,12 +43,11 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyHostToDevice
-    ) );
+    CU_CALL(cuMemcpyHtoD(
+        reinterpret_cast<CUdeviceptr>(&*result),
+        &*first,
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+    ));
     return result + size;
 }
 
@@ -68,12 +71,11 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyDeviceToHost
-    ) );
+    CU_CALL(cuMemcpyDtoH(
+        &*result,
+        reinterpret_cast<CUdeviceptr>(&*first),
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+    ));
     return result + size;
 }
 
@@ -97,12 +99,11 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyDeviceToDevice
-    ) );
+    CU_CALL(cuMemcpyDtoD(
+        reinterpret_cast<CUdeviceptr>(&*result),
+        reinterpret_cast<CUdeviceptr>(&*first),
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+    ));
     return result + size;
 }
 
@@ -126,16 +127,15 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyHostToHost
-    ) );
+    std::memcpy(
+        &*result,
+        &*first,
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+    );
     return result + size;
 }
 
-#if (CUDART_VERSION >= 1010)
+#if (CUDA_VERSION >= 1010)
 
 /**
  * Asynchronous copy from host memory area to device memory area.
@@ -157,11 +157,12 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpyAsync(
-        &*result, &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyHostToDevice, stream.data()
-    ) );
+    CU_CALL(cuMemcpyHtoDAsync(
+        reinterpret_cast<CUdeviceptr>(&*result),
+        &*first,
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
+        stream.data()
+    ));
     return result + size;
 }
 
@@ -185,13 +186,12 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpyAsync(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyDeviceToHost
-      , stream.data()
-    ) );
+    CU_CALL(cuMemcpyDtoHAsync(
+        &*result,
+        reinterpret_cast<CUdeviceptr>(&*first),
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
+        stream.data()
+    ));
     return result + size;
 }
 
@@ -215,13 +215,12 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpyAsync(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyDeviceToDevice
-      , stream.data()
-    ) );
+    CU_CALL(cuMemcpyDtoDAsync(
+        reinterpret_cast<CUdeviceptr>(&*result),
+        reinterpret_cast<CUdeviceptr>(&*first),
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
+        stream.data()
+    ));
     return result + size;
 }
 
@@ -245,13 +244,11 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemcpyAsync(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , cudaMemcpyHostToHost
-      , stream.data()
-    ) );
+    std::memcpy(
+        &*result,
+        &*first,
+        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+    );
     return result + size;
 }
 
@@ -269,11 +266,11 @@ inline typename std::enable_if<
   , void>::type memset(OutputIterator first, OutputIterator last, unsigned char value)
 {
     typename std::iterator_traits<OutputIterator>::difference_type size = last - first;
-    CUDA_CALL( cudaMemset(
-        &*first
-      , value
-      , size * sizeof(typename std::iterator_traits<OutputIterator>::value_type)
-    ) );
+    CU_CALL(cuMemsetD8(
+        reinterpret_cast<CUdeviceptr>(&*first),
+        value,
+        size * sizeof(typename std::iterator_traits<OutputIterator>::value_type)
+    ));
 }
 
 } // namespace cuda
