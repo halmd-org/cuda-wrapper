@@ -1,6 +1,7 @@
 /* cuda_wrapper/event.hpp
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -11,7 +12,6 @@
 #ifndef CUDA_EVENT_HPP
 #define CUDA_EVENT_HPP
 
-#include <boost/utility.hpp>
 #include <memory>
 
 #include <cuda.h>
@@ -29,8 +29,14 @@ namespace cuda {
 class event
 {
 private:
-    struct container : boost::noncopyable
+    struct container
     {
+        /**
+         * make the class noncopyable by deleting the copy and assignment operator
+         */
+        container(const container&) = delete;
+        container& operator=(const container&) = delete;
+
         /**
          * creates an event
          */
@@ -111,7 +117,7 @@ public:
         CUresult res = cuEventQuery(m_event->m_event);
         if (res == CUDA_SUCCESS)
             return true;
-        else if (res = CUDA_ERROR_NOT_READY)
+        else if (res == CUDA_ERROR_NOT_READY)
             return false;
         CU_ERROR(res);
     }

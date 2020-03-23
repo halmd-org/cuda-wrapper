@@ -12,7 +12,6 @@
 #ifndef CUDA_STREAM_HPP
 #define CUDA_STREAM_HPP
 
-#include <boost/utility.hpp>
 #include <memory>
 
 #include <cuda.h>
@@ -29,8 +28,15 @@ namespace cuda {
 class stream
 {
 private:
-    struct container : boost::noncopyable
+    class container
     {
+    public:
+        /**
+         * make the class noncopyable by deleting the copy and assignment operator
+         */
+        container(const container&) = delete;
+        container& operator=(const container&) = delete;
+
         /**
          * creates a stream
          */

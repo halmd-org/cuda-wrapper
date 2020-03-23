@@ -12,8 +12,6 @@
 #ifndef CUDA_VECTOR_HPP
 #define CUDA_VECTOR_HPP
 
-#include <algorithm>
-#include <boost/utility.hpp>
 #include <memory>
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
@@ -38,9 +36,15 @@ public:
     typedef size_t size_type;
 
 private:
-    class container : boost::noncopyable
+    class container
     {
     public:
+        /**
+         * make the class noncopyable by deleting the copy and assignment operator
+         */
+        container(const container&) = delete;
+        container& operator=(const container&) = delete;
+
         /**
          * allocate global device memory
          */
