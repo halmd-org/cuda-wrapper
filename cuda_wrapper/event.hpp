@@ -11,8 +11,8 @@
 #ifndef CUDA_EVENT_HPP
 #define CUDA_EVENT_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
+#include <memory>
 
 #include <cuda.h>
 
@@ -137,7 +137,7 @@ public:
     }
 
 private:
-    boost::shared_ptr<container> m_event;
+    std::shared_ptr<container> m_event;
 };
 
 #endif /* CUDA_VERSION >= 1010 */

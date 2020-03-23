@@ -1,6 +1,7 @@
 /* cuda_wrapper/stream.hpp
  *
- * Copyright (C) 2007  Peter Colberg
+ * Copyright (C) 2007 Peter Colberg
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -11,8 +12,8 @@
 #ifndef CUDA_STREAM_HPP
 #define CUDA_STREAM_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
+#include <memory>
 
 #include <cuda.h>
 
@@ -88,7 +89,7 @@ public:
     }
 
 private:
-    boost::shared_ptr<container> m_stream;
+    std::shared_ptr<container> m_stream;
 };
 
 #endif /* CUDA_VERSION >= 1010 */

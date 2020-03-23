@@ -13,8 +13,8 @@
 #define CUDA_VECTOR_HPP
 
 #include <algorithm>
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
+#include <memory>
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
@@ -172,7 +172,7 @@ public:
     }
 
 private:
-    boost::shared_ptr<container> m_mem;
+    std::shared_ptr<container> m_mem;
     size_type m_size;
 };
 
