@@ -20,8 +20,6 @@
 
 namespace cuda {
 
-#if (CUDA_VERSION >= 1010)
-
 /**
  * CUDA stream wrapper class
  */
@@ -97,8 +95,6 @@ public:
 private:
     std::shared_ptr<container> m_stream;
 };
-
-#endif /* CUDA_VERSION >= 1010 */
 
 } // namespace cuda
 

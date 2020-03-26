@@ -270,7 +270,6 @@ public:
             return get_attribute(CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT);
         }
 
-#if (CUDART_VERSION >= 2000)
         /**
          * asynchronous kernel and memory operations capability
          */
@@ -286,8 +285,7 @@ public:
         {
             return get_attribute(CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT);
         }
-#endif /* CUDART_VERSION >= 2000 */
-#if (CUDART_VERSION >= 4000)
+
         /**
          * maximum resident threads per multiprocessor
          */
@@ -295,7 +293,6 @@ public:
         {
             return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR);
         }
-#endif /* CUDART_VERSION >= 4000 */
     };
 };
 

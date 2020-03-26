@@ -15,11 +15,7 @@
 
 namespace cuda {
 
-#if (CUDA_VERSION >= 3020)
 typedef std::size_t size_type;
-#else
-typedef unsigned int size_type;
-#endif
 
 } // namespace cuda
 

@@ -21,8 +21,6 @@
 
 namespace cuda {
 
-#if (CUDA_VERSION >= 1010)
-
 /**
  * CUDA event wrapper class
  */
@@ -45,7 +43,6 @@ private:
             CU_CALL(cuEventCreate(&m_event, CU_EVENT_DEFAULT));
         }
 
-#if (CUDART_VERSION >= 2020)
         /**
          * creates an event with given flags
          */
@@ -53,7 +50,6 @@ private:
         {
             CU_CALL(cuEventCreate(&m_event, flags));
         }
-#endif
 
         /**
          * destroys the event
@@ -72,12 +68,10 @@ public:
      */
     event() : m_event(new container) {}
 
-#if (CUDART_VERSION >= 2020)
     /**
      * creates an event with given flags
      */
     event(int flags) : m_event(new container(flags)) {}
-#endif
 
     /**
      * records an event
@@ -145,8 +139,6 @@ public:
 private:
     std::shared_ptr<container> m_event;
 };
-
-#endif /* CUDA_VERSION >= 1010 */
 
 } // namespace cuda
 

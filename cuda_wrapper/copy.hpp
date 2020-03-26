@@ -135,8 +135,6 @@ inline typename std::enable_if<
     return result + size;
 }
 
-#if (CUDA_VERSION >= 1010)
-
 /**
  * Asynchronous copy from host memory area to device memory area.
  */
@@ -251,8 +249,6 @@ inline typename std::enable_if<
     );
     return result + size;
 }
-
-#endif /* (CUDART_VERSION >= 1010) */
 
 /**
  * Fill device memory area with constant byte value.

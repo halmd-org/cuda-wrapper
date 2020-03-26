@@ -18,8 +18,6 @@
 
 namespace cuda {
 
-#if CUDART_VERSION >= 2020
-
 /**
  * Returns latest version of CUDA supported by the driver.
  */
@@ -39,8 +37,6 @@ inline int runtime_version()
     CUDA_CALL(cudaRuntimeGetVersion(&version));
     return version;
 }
-
-#endif /* CUDART_VERSION >= 2020 */
 
 } // namespace cuda
 

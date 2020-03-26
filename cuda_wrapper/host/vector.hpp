@@ -40,10 +40,8 @@ public:
     typedef typename _Base::const_pointer const_pointer;
     typedef detail::random_access_iterator<typename _Base::iterator, host_random_access_iterator_tag> iterator;
     typedef detail::random_access_iterator<typename _Base::const_iterator, host_random_access_iterator_tag> const_iterator;
-#if CUDA_VERSION >= 2020
     typedef detail::random_access_iterator<pointer, device_random_access_iterator_tag> device_iterator;
     typedef detail::random_access_iterator<const_pointer, device_random_access_iterator_tag> const_device_iterator;
-#endif
 
 public:
     /** creates an empty vector */
@@ -86,7 +84,6 @@ public:
         return const_iterator(_Base::end());
     }
 
-#if CUDA_VERSION >= 2020
     /**
      * Returns device iterator to the first element of the array.
      *
@@ -146,7 +143,6 @@ public:
         CU_CALL(cuMemHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0));
         return const_device_iterator(static_cast<const_pointer>(p) + _Base::size());
     }
-#endif /* CUDA_VERSION >= 2020 */
 };
 
 } // namespace host
