@@ -38,9 +38,9 @@ private:
         /**
          * creates a stream
          */
-        container()
+        container(unsigned int flags)
         {
-            CU_CALL(cuStreamCreate(&m_stream, CU_STREAM_DEFAULT));
+            CU_CALL(cuStreamCreate(&m_stream, flags));
         }
 
         /**
@@ -56,9 +56,10 @@ private:
 
 public:
     /**
-     * creates a stream
+     * creates a stream with given flags
      */
-    stream() : m_stream(new container) {}
+    stream(unsigned int flags = CU_STREAM_DEFAULT)
+        : m_stream(new container(flags)) {}
 
     /**
      * blocks until the device has completed all operations in the stream

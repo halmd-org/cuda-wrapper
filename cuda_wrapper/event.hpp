@@ -38,15 +38,7 @@ private:
         /**
          * creates an event
          */
-        container()
-        {
-            CU_CALL(cuEventCreate(&m_event, CU_EVENT_DEFAULT));
-        }
-
-        /**
-         * creates an event with given flags
-         */
-        container(int flags)
+        container(unsigned int flags)
         {
             CU_CALL(cuEventCreate(&m_event, flags));
         }
@@ -64,14 +56,10 @@ private:
 
 public:
     /**
-     * creates an event
-     */
-    event() : m_event(new container) {}
-
-    /**
      * creates an event with given flags
      */
-    event(int flags) : m_event(new container(flags)) {}
+    event(unsigned int flags = CU_EVENT_DEFAULT)
+        : m_event(new container(flags)) {}
 
     /**
      * records an event
