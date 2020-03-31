@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010, 2012 Peter Colberg
+ * Copyright (C) 2010, 2012 Peter Colberg
  *
  * This file is part of cuda-wrapper.
  *
@@ -16,6 +16,8 @@
 #include <vector>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+
+#include "test.hpp"
 
 BOOST_AUTO_TEST_SUITE( global_device_memory )
 
