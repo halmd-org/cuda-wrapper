@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010, 2012 Peter Colberg
+ * Copyright (C) 2020       Jaslo Ziska
+ * Copyright (C) 2010, 2012 Peter Colberg
  *
  * This file is part of cuda-wrapper.
  *
@@ -10,48 +11,152 @@
 #ifndef CUDA_WRAPPER_DETAIL_RANDOM_ACCESS_ITERATOR_HPP
 #define CUDA_WRAPPER_DETAIL_RANDOM_ACCESS_ITERATOR_HPP
 
-#include <boost/iterator/iterator_adaptor.hpp>
-#include <boost/iterator/iterator_traits.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
+#include <iterator>
 
 namespace cuda {
 namespace detail {
 
 /**
  * Random access iterator with given base iterator and category.
+ * Inspired by __gnu_cxx::__normal_iterator from stl_iterator.h
  */
-template <typename Iterator, typename Category>
+template <typename Iterator, class Category>
 class random_access_iterator
-  : public boost::iterator_adaptor<
-        random_access_iterator<Iterator, Category>
-      , Iterator
-      , boost::use_default
-      , boost::random_access_traversal_tag
-    >
 {
-private:
-    struct enabler {};  // a private type avoids misuse
+protected:
+    Iterator current_;
 
 public:
     typedef Category iterator_category;
+    typedef typename std::iterator_traits<Iterator>::value_type value_type;
+    typedef typename std::iterator_traits<Iterator>::difference_type
+        difference_type;
+    typedef typename std::iterator_traits<Iterator>::reference reference;
+    typedef typename std::iterator_traits<Iterator>::pointer pointer;
 
-    random_access_iterator()
-      : random_access_iterator::iterator_adaptor_(0) {}
+    random_access_iterator() : current_(Iterator()) {}
 
-    explicit random_access_iterator(Iterator iterator)
-      : random_access_iterator::iterator_adaptor_(iterator) {}
+    explicit random_access_iterator(const Iterator& i) : current_(i) {}
 
     template <typename OtherIterator>
-    random_access_iterator(
-        random_access_iterator<OtherIterator, Category> const& other
-      , typename boost::enable_if<
-            boost::is_convertible<OtherIterator, Iterator>
-          , enabler
-        >::type = enabler()
-    )
-      : random_access_iterator::iterator_adaptor_(other.base()) {}
+    random_access_iterator(const random_access_iterator<
+        OtherIterator,
+        typename std::enable_if<
+            std::is_convertible<OtherIterator, Iterator>::value,
+            Category
+    >::type>& other) : current_(other.base()) {}
+
+    const Iterator& base() const { return current_; }
+
+    reference operator*() const { return* current_; }
+    pointer operator->() const { return current_; }
+    reference operator[](const difference_type& n) const
+    {
+        return current_[n];
+    }
+
+    random_access_iterator& operator++()
+    {
+        ++current_;
+        return* this;
+    }
+    random_access_iterator operator++(int)
+    {
+        return random_access_iterator(current_++);
+    }
+
+    random_access_iterator& operator--()
+    {
+        --current_;
+        return* this;
+    }
+    random_access_iterator operator--(int)
+    {
+        return random_access_iterator(current_--);
+    }
+
+    random_access_iterator& operator+=(const difference_type& n)
+    {
+        current_ += n;
+        return* this;
+    }
+
+    random_access_iterator operator+(const difference_type& n) const
+    {
+        return random_access_iterator(current_ + n);
+    }
+
+    random_access_iterator& operator-=(const difference_type& n)
+    {
+        current_ -= n;
+        return* this;
+    }
+
+    random_access_iterator operator-(const difference_type& n) const
+    {
+        return random_access_iterator(current_ - n);
+    }
 };
+
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator==(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() == rhs.base();
+}
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator!=(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() != rhs.base();
+}
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator<(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() < rhs.base();
+}
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator>(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() > rhs.base();
+}
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator<=(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() <= rhs.base();
+}
+template <typename IteratorL, typename IteratorR, class Category>
+inline bool operator>=(const random_access_iterator<IteratorL, Category>& lhs,
+    const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() >= rhs.base();
+}
+
+template<typename IteratorL, typename IteratorR, class Category>
+inline typename random_access_iterator<IteratorL, Category>::difference_type
+operator-(const random_access_iterator<IteratorL, Category>& lhs,
+          const random_access_iterator<IteratorR, Category>& rhs)
+{
+    return lhs.base() - rhs.base();
+}
+template<typename Iterator, class Category>
+inline typename random_access_iterator<Iterator, Category>::difference_type
+operator-(const random_access_iterator<Iterator, Category>& lhs,
+          const random_access_iterator<Iterator, Category>& rhs)
+{
+    return lhs.base() - rhs.base();
+}
+template <typename Iterator, class Category>
+inline random_access_iterator<Iterator, Category>
+operator+(typename random_access_iterator<Iterator, Category>::difference_type
+    n, const random_access_iterator<Iterator, Category>& i)
+{
+    return random_access_iterator<Iterator, Category>(i.base() + n);
+}
 
 } // namespace detail
 } // namespace cuda
