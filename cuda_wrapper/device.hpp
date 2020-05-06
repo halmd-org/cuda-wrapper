@@ -38,8 +38,8 @@ namespace cuda {
 class device
 {
 private:
-    int ordinal = -1;
-    CUdevice dev;
+    int num_ = -1;
+    CUdevice dev_;
 
 public:
     device()
@@ -50,9 +50,9 @@ public:
     ~device() throw() // no-throw guarantee
     {
         // just like remove, but non-throwing
-        if (ordinal >= 0) {
+        if (num_ >= 0) {
             cuCtxPopCurrent(NULL);
-            cuDevicePrimaryCtxRelease(dev);
+            cuDevicePrimaryCtxRelease(dev_);
         }
     }
 
@@ -67,22 +67,36 @@ public:
     }
 
     /**
+     * returns true if device is busy, false otherwise
+     */
+    static bool active(int num)
+    {
+        CUdevice dev;
+        unsigned int flags;
+        int active;
+
+        CU_CALL(cuDeviceGet(&dev, num));
+        CU_CALL(cuDevicePrimaryCtxGetState(dev, &flags, &active));
+        return active;
+    }
+
+    /**
      * set device on which the active host thread executes device code
      */
     void set(int num)
     {
         // return immediately if device is the same as before
-        if (num == ordinal)
+        if (num == num_)
             return;
         // remove old device (if necessary)
         remove();
 
         CUcontext ctx;
-        CU_CALL(cuDeviceGet(&dev, num));
-        CU_CALL(cuDevicePrimaryCtxRetain(&ctx, dev));
+        CU_CALL(cuDeviceGet(&dev_, num));
+        CU_CALL(cuDevicePrimaryCtxRetain(&ctx, dev_));
         CU_CALL(cuCtxPushCurrent(ctx));
 
-        ordinal = num;
+        num_ = num;
     }
 
     /*
@@ -90,10 +104,10 @@ public:
      */
     void remove()
     {
-        if (ordinal >= 0) {
+        if (num_ >= 0) {
             CU_CALL(cuCtxPopCurrent(NULL));
-            CU_CALL(cuDevicePrimaryCtxRelease(dev));
-            ordinal = -1;
+            CU_CALL(cuDevicePrimaryCtxRelease(dev_));
+            num_ = -1;
         }
     }
 
@@ -102,7 +116,7 @@ public:
      */
     int get() const
     {
-        return ordinal;
+        return num_;
     }
 
     /*
@@ -114,9 +128,9 @@ public:
         CU_CALL(cuProfilerStop()); // flush profiling buffers
 #endif
         // only call remove if device was set before
-        if (ordinal >= 0) {
-            CU_CALL(cuDevicePrimaryCtxReset(dev));
-            ordinal = -1;
+        if (num_ >= 0) {
+            CU_CALL(cuDevicePrimaryCtxReset(dev_));
+            num_ = -1;
         }
     }
 

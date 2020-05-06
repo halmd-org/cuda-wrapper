@@ -24,8 +24,12 @@ BOOST_AUTO_TEST_CASE(device)
 
     BOOST_CHECK(dev.get() == -1);
 
+    BOOST_CHECK(cuda::device::active(TEST_DEVICE) == false);
+
     dev.set(TEST_DEVICE);
     BOOST_CHECK(dev.get() == 0);
+
+    BOOST_CHECK(cuda::device::active(TEST_DEVICE) == true);
 
     dev.set(TEST_DEVICE);
     BOOST_CHECK(dev.get() == 0);
