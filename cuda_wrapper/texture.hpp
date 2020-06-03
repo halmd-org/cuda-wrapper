@@ -1,6 +1,6 @@
-/*
- * Copyright © 2013      Felix Höfling
- * Copyright © 2007-2012 Peter Colberg
+/* cuda_wrapper/texture.hpp
+ *
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This file is part of cuda-wrapper.
  *
@@ -8,66 +8,71 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
+#include <cuda_runtime.h>
+
+#include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/vector.hpp>
+
 #ifndef CUDA_TEXTURE_HPP
 #define CUDA_TEXTURE_HPP
 
-#include <cuda_runtime.h>
-
-#ifndef __CUDACC__
-# include <cuda_wrapper/error.hpp>
-# include <cuda_wrapper/vector.hpp>
-#endif
-
-/*
- * CUDA texture management
- */
-
 namespace cuda {
 
-template <typename T, int dim = 1, cudaTextureReadMode mode = cudaReadModeElementType>
+template <typename T, size_t dim = 1, cudaTextureReadMode mode = cudaReadModeElementType>
 class texture
 {
-public:
-#ifdef __CUDACC__
-    /**
-     * type-safe constructor for CUDA host code
-     */
-    texture(::texture<T, dim, mode>& tex) : ptr_(&tex), desc_(tex.channelDesc) {}
-
-    /**
-     * variant constructor for CUDA host code
-     *
-     * For variant textures we need to override the channel desciptor.
-     */
-    texture(::texture<void, dim, mode>& tex) : ptr_(&tex), desc_(cudaCreateChannelDesc<T>()) {}
-#else /* ! __CUDACC__ */
-    /**
-     * bind CUDA texture to device memory array
-     */
-    void bind(cuda::vector<T> const& array) const
-    {
-        ptr_->channelDesc = desc_;
-        CUDA_CALL(cudaBindTexture(NULL, ptr_, array.data(), &desc_));
-    }
-
-    /**
-     * unbind CUDA texture
-     */
-    void unbind() const
-    {
-        CUDA_CALL(cudaUnbindTexture(ptr_));
-    }
-#endif /* ! __CUDACC__ */
-
 private:
-#ifndef __CUDACC__
-    texture() : ptr_(NULL), desc_() {}
-#endif
+    class container
+    {
+    public:
+        /**
+         * make the class noncopyable by deleting the copy and assignment operator
+         */
+        container(const container&) = delete;
+        container& operator=(const container&) = delete;
 
-    textureReference* ptr_;
-    cudaChannelFormatDesc const desc_;
+        /**
+         * create a texture object
+         */
+        container(const cuda::vector<T>& vector) : data_(vector.data())
+        {
+            cudaResourceDesc resource_desc = {};
+            resource_desc.resType = cudaResourceTypeLinear;
+            resource_desc.res.linear.devPtr = const_cast<T*>(data_);
+            resource_desc.res.linear.desc = cudaCreateChannelDesc<T>();
+            resource_desc.res.linear.sizeInBytes = vector.capacity() * sizeof(T);
+
+            cudaTextureDesc texture_desc = {};
+            texture_desc.readMode = mode;
+
+            CUDA_CALL(cudaCreateTextureObject(&texture_, &resource_desc,
+                &texture_desc, NULL));
+        }
+
+        /**
+         * destroy the texture object
+         */
+        ~container() throw() // no-throw guarantee
+        {
+            cudaDestroyTextureObject(texture_);
+        }
+
+        cudaTextureObject_t texture_;
+        // save the shared pointer to the device memory so it can't be freed
+        T const* data_;
+    };
+
+    std::shared_ptr<container> texture_;
+
+public:
+    texture(const cuda::vector<T>& vector) : texture_(new container(vector)) {}
+
+    inline operator cudaTextureObject_t() const
+    {
+        return texture_->texture_;
+    }
 };
 
 } // namespace cuda
 
-#endif /* ! CUDA_TEXTURE_HPP */
+#endif // CUDA_TEXTURE_HPP

@@ -79,6 +79,7 @@ create_test(device device.cpp)
 create_test(copy copy.cpp)
 create_gpu_test(function function.cpp function_kernel.cu)
 create_gpu_test(event event.cpp function_kernel.cu)
+create_gpu_test(texture texture.cpp texture_kernel.cu)
 # this test somehow doesn't work with cuda-memcheck
 create_gpu_test(stream NO_MEMCHECK stream.cpp function_kernel.cu)
 

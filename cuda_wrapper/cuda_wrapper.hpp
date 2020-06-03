@@ -47,6 +47,7 @@
 # include <cuda_wrapper/host/allocator.hpp>
 # include <cuda_wrapper/host/vector.hpp>
 # include <cuda_wrapper/stream.hpp>
+# include <cuda_wrapper/texture.hpp>
 # include <cuda_wrapper/thread.hpp>
 # include <cuda_wrapper/vector.hpp>
 # include <cuda_wrapper/version.hpp>
@@ -58,6 +59,5 @@
 
 #include <cuda_wrapper/function.hpp>
 #include <cuda_wrapper/symbol.hpp>
-#include <cuda_wrapper/texture.hpp>
 
 #endif /* ! CUDA_WRAPPER_HPP */
