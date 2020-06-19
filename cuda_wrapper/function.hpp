@@ -12,6 +12,8 @@
 #ifndef CUDA_FUNCTION_HPP
 #define CUDA_FUNCTION_HPP
 
+#include <functional>
+
 #include <cuda_runtime.h>
 
 #ifndef __CUDA_ARCH__
@@ -69,32 +71,42 @@ private:
     typedef void (*T)(Args...);
 
     const void *f_;
+    std::function<void (int *, int *)> occupancy_;
 
     dim3 grid_ = 0;
     dim3 block_ = 0;
     size_t shared_mem_ = 0;
     cudaStream_t stream_ = 0;
 
-    int max_block_size_ = 0;
-    int min_grid_size_ = 0;
+    int min_grid_size_ = -1;
+    int max_block_size_ = -1;
 
-    cudaFuncAttributes attr_;
+    cudaFuncAttributes attr_ = {};
+
+    cudaFuncAttributes *attributes()
+    {
+        if (attr_.binaryVersion == 0)
+            CUDA_CALL(cudaFuncGetAttributes(&attr_, f_));
+        return &attr_;
+    }
+
 public:
-    function(T f) : f_(reinterpret_cast<const void *>(f)) {
-#ifndef __CUDA_ARCH__
-        CUDA_CALL(cudaFuncGetAttributes(&attr_, f_));
-        CUDA_CALL(cudaOccupancyMaxPotentialBlockSize(&min_grid_size_,
-            &max_block_size_, f));
+    function(T f) : f_(reinterpret_cast<const void *>(f))
+    {
+#ifdef __CUDACC__
+        occupancy_ = std::function<void (int *, int *)>([&](int *min_grid_size, int *max_block_size) {
+            cudaOccupancyMaxPotentialBlockSize(min_grid_size, max_block_size, f_);
+        });
 #endif
     }
 
-    template <typename SMemSizeFun>
-    function(T f, SMemSizeFun fun) : f_(reinterpret_cast<const void *>(f))
+    template <typename SMemSizeFunc>
+    function(T f, SMemSizeFunc smem_size_func) : f_(reinterpret_cast<const void *>(f))
     {
-#ifndef __CUDA_ARCH__
-        CUDA_CALL(cudaFuncGetAttributes(&attr_, f_));
-        CUDA_CALL(cudaOccupancyMaxPotentialBlockSizeVariableSMem(&min_grid_size_,
-            &max_block_size_, f, fun));
+#ifdef __CUDACC__
+        occupancy_ = std::function<void (int *, int *)>([&, smem_size_func](int *min_grid_size, int *max_block_size) {
+            cudaOccupancyMaxPotentialBlockSizeVariableSMem(min_grid_size, max_block_size, f_, smem_size_func);
+        });
 #endif
     }
 
@@ -118,15 +130,13 @@ public:
         stream_ = stream.data();
     }
 
-    void configure(dim3 const& grid, dim3 const& block, size_t shared_mem,
-        stream& stream)
+    void configure(dim3 const& grid, dim3 const& block, size_t shared_mem, stream& stream)
     {
         grid_ = grid;
         block_ = block;
         shared_mem_ = shared_mem;
         stream_ = stream.data();
     }
-
 
     /**
      * execute kernel
@@ -137,51 +147,55 @@ public:
         CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p, shared_mem_, stream_));
     }
 
-    unsigned int binary_version() const
+    unsigned int binary_version()
     {
-        return attr_.binaryVersion;
+        return attributes()->binaryVersion;
     }
 
-    size_t const_size_bytes() const
+    size_t const_size_bytes()
     {
-        return attr_.constSizeBytes;
+        return attributes()->constSizeBytes;
     }
 
-    size_t local_size_bytes() const
+    size_t local_size_bytes()
     {
-        return attr_.localSizeBytes;
+        return attributes()->localSizeBytes;
     }
 
-    unsigned int max_threads_per_block() const
+    unsigned int max_threads_per_block()
     {
-        return attr_.maxThreadsPerBlock;
+        return attributes()->maxThreadsPerBlock;
     }
 
-    unsigned int num_regs() const
+    unsigned int num_regs()
     {
-        return attr_.numRegs;
+        return attributes()->numRegs;
     }
 
-    unsigned int ptx_version() const
+    unsigned int ptx_version()
     {
-        return attr_.ptxVersion;
+        return attributes()->ptxVersion;
     }
 
-    size_t shared_size_bytes() const
+    size_t shared_size_bytes()
     {
-        return attr_.sharedSizeBytes;
+        return attributes()->sharedSizeBytes;
     }
 
-    int max_block_size() const
+    int min_grid_size()
     {
-        return max_block_size_;
-    }
-
-    int min_grid_size() const
-    {
+        if (min_grid_size_ < 0)
+            occupancy_(&min_grid_size_, &max_block_size_);
         return min_grid_size_;
     }
-#endif // __CUDACC__
+
+    int max_block_size()
+    {
+        if (max_block_size_ < 0)
+            occupancy_(&min_grid_size_, &max_block_size_);
+        return max_block_size_;
+    }
+#endif // ! __CUDACC__
 };
 
 } // namespace cuda
