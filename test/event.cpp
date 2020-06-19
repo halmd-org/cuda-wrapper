@@ -8,7 +8,7 @@
  */
 
 #define BOOST_TEST_MODULE event
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <algorithm>
 #include <functional>

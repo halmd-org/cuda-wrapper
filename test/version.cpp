@@ -8,7 +8,7 @@
  */
 
 #define BOOST_TEST_MODULE version
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
