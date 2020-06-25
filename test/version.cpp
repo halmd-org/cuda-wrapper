@@ -14,6 +14,11 @@
 
 BOOST_AUTO_TEST_CASE(version)
 {
-    BOOST_TEST_MESSAGE("driver: " << cuda::driver_version());
-    BOOST_TEST_MESSAGE("runtime: " << cuda::runtime_version());
+    int driver = cuda::driver_version();
+    BOOST_TEST_MESSAGE("driver: " << driver);
+
+    int runtime = cuda::runtime_version();
+    BOOST_TEST_MESSAGE("runtime: " << runtime);
+
+    BOOST_CHECK_MESSAGE(driver >= runtime, "The CUDA driver must not be older than the CUDA runtime library");
 }
