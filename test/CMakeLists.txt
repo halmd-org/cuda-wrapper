@@ -86,7 +86,5 @@ create_gpu_test(stream NO_MEMCHECK stream.cpp function_kernel.cu)
 # tests which use data driven test cases don't work with Boost < 1.59.0
 if(NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
   create_test(allocator allocator.cpp)
-  create_test(host_allocator host_allocator.cpp)
   create_test(vector vector.cpp)
-  create_test(host_vector host_vector.cpp)
 endif()

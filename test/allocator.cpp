@@ -17,10 +17,10 @@
 
 #include "test.hpp"
 
-#define TEST(type, dataset)                                                    \
-    cuda::allocator<type> A;                                                   \
+#define TEST_CASE(type, dataset)                                               \
+    type A;                                                                    \
     BOOST_DATA_TEST_CASE(allocate, dataset, n) {                               \
-        type *ptr = A.allocate(n);                                             \
+        type::value_type *ptr = A.allocate(n);                                 \
         BOOST_TEST(ptr == A.address(*ptr));                                    \
         A.deallocate(ptr, n);                                                  \
     }
@@ -51,28 +51,36 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
     0, 1, 3, 10, 57, 111, 999, 4321, 10000, 31415, 100000
 });
 
-BOOST_AUTO_TEST_SUITE(allocator)
-    BOOST_AUTO_TEST_SUITE(type_int)
-        TEST(int, dataset)
+#define TEST(allocator)                                                        \
+    BOOST_AUTO_TEST_SUITE(type_int)                                            \
+        TEST_CASE(allocator<int>, dataset)                                     \
+    BOOST_AUTO_TEST_SUITE_END()                                                \
+                                                                               \
+    BOOST_AUTO_TEST_SUITE(type_unsigned_long_long)                             \
+        TEST_CASE(allocator<unsigned long long>, dataset)                      \
+    BOOST_AUTO_TEST_SUITE_END()                                                \
+                                                                               \
+    BOOST_AUTO_TEST_SUITE(type_float)                                          \
+        TEST_CASE(allocator<float>, dataset)                                   \
+    BOOST_AUTO_TEST_SUITE_END()                                                \
+                                                                               \
+    BOOST_AUTO_TEST_SUITE(type_double)                                         \
+        TEST_CASE(allocator<double>, dataset)                                  \
+    BOOST_AUTO_TEST_SUITE_END()                                                \
+                                                                               \
+    BOOST_AUTO_TEST_SUITE(type_struct)                                         \
+        TEST_CASE(allocator<x>, dataset)                                       \
+    BOOST_AUTO_TEST_SUITE_END()                                                \
+                                                                               \
+    BOOST_AUTO_TEST_SUITE(type_class)                                          \
+        TEST_CASE(allocator<y>, dataset)                                       \
     BOOST_AUTO_TEST_SUITE_END()
 
-    BOOST_AUTO_TEST_SUITE(type_unsigned_long_long)
-        TEST(unsigned long long, dataset)
-    BOOST_AUTO_TEST_SUITE_END()
 
-    BOOST_AUTO_TEST_SUITE(type_float)
-        TEST(float, dataset)
-    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE(device)
+    TEST(cuda::allocator)
+BOOST_AUTO_TEST_SUITE_END()
 
-    BOOST_AUTO_TEST_SUITE(type_double)
-        TEST(double, dataset)
-    BOOST_AUTO_TEST_SUITE_END()
-
-    BOOST_AUTO_TEST_SUITE(type_struct)
-        TEST(x, dataset)
-    BOOST_AUTO_TEST_SUITE_END()
-
-    BOOST_AUTO_TEST_SUITE(type_class)
-        TEST(y, dataset)
-    BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE(host)
+    TEST(cuda::host::allocator)
 BOOST_AUTO_TEST_SUITE_END()
