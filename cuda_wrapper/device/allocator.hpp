@@ -1,4 +1,4 @@
-/* Allocator that wraps cuMemAllocManaged -*- C++ -*-
+/* Allocator that wraps cuMemAlloc -*- C++ -*-
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
@@ -10,8 +10,8 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_ALLOCATOR_HPP
-#define CUDA_ALLOCATOR_HPP
+#ifndef CUDA_DEVICE_ALLOCATOR_HPP
+#define CUDA_DEVICE_ALLOCATOR_HPP
 
 #include <limits>
 #include <new>
@@ -19,6 +19,8 @@
 #include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/device.hpp>
+#include <stdio.h>
 
 namespace cuda {
 
@@ -36,7 +38,7 @@ using std::ptrdiff_t;
  */
 
 template <typename T>
-struct allocator {
+struct device::allocator {
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
@@ -47,11 +49,11 @@ struct allocator {
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator(unsigned int flags = CU_MEM_ATTACH_GLOBAL) throw() : flags_(flags) {}
-    allocator(const allocator& alloc) throw() : flags_(alloc.flags_) {}
+    allocator() throw() {}
+    allocator(const allocator&) throw() {}
 
     template <typename U>
-    allocator(const allocator<U>& alloc) throw() : flags_(alloc.flags_) {}
+    allocator(const allocator<U>&) throw() {}
 
     ~allocator() throw() {}
 
@@ -67,7 +69,7 @@ struct allocator {
         if (__builtin_expect(s > this->max_size(), false))
             throw std::bad_alloc();
 
-        CU_CALL(cuMemAllocManaged(&p, s * sizeof(T), flags_));
+        CU_CALL(cuMemAlloc(&p, s * sizeof(T)));
 
         return reinterpret_cast<pointer>(p);
     }
@@ -92,19 +94,16 @@ struct allocator {
     {
         p->~T();
     }
-
-private:
-    unsigned int flags_;
 };
 
 template<typename T>
-inline bool operator==(const allocator<T>&, const allocator<T>&)
+inline bool operator==(const device::allocator<T>&, const device::allocator<T>&)
 {
     return true;
 }
 
 template<typename T>
-inline bool operator!=(const allocator<T>&, const allocator<T>&)
+inline bool operator!=(const device::allocator<T>&, const device::allocator<T>&)
 {
     return false;
 }

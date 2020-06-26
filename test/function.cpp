@@ -46,74 +46,58 @@ BOOST_AUTO_TEST_CASE(simple) {
 BOOST_AUTO_TEST_CASE(add) {
     cuda::config dim(BLOCKS, THREADS);
 
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-
-    cuda::vector<double> d_a(h_a.size());
-    cuda::vector<double> d_b(h_a.size());
-    cuda::vector<double> d_c(h_a.size());
+    cuda::vector<double> a(BLOCKS * THREADS);
+    cuda::vector<double> b(a.size());
+    cuda::vector<double> c(a.size());
 
     // create random number generator
     std::default_random_engine gen;
     std::uniform_real_distribution<double> rand(0, 1);
 
-    // generate random numbers and copy to device
-    std::generate(h_a.begin(), h_a.end(), std::bind(rand, std::ref(gen)));
-    cuda::copy(h_a.begin(), h_a.end(), d_a.begin());
-
-    std::generate(h_b.begin(), h_b.end(), std::bind(rand, std::ref(gen)));
-    cuda::copy(h_b.begin(), h_b.end(), d_b.begin());
+    // generate random numbers
+    std::generate(a.begin(), a.end(), std::bind(rand, std::ref(gen)));
+    std::generate(b.begin(), b.end(), std::bind(rand, std::ref(gen)));
 
     // configure kernel
     kernel_add.configure(dim.grid, dim.block);
     // launch kernell
-    kernel_add(d_a, d_b, d_c);
+    kernel_add(a, b, c);
 
     // calculate the result on the host
-    cuda::host::vector<double> result(h_a.size());
-    std::transform(h_a.begin(), h_a.end(), h_b.begin(), result.begin(),
-        std::plus<double>());
+    std::vector<double> result(a.size());
+    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<double>());
 
-    // wait for kernel to be finished (if it hasn't already)
+    // wait for kernel to finish (if it hasn't already)
     cuda::thread::synchronize();
-    // copy back result from device to host
-    cuda::copy(d_c.begin(), d_c.end(), h_c.begin());
 
-    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_c.begin(), h_c.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), c.begin(), c.end());
 }
 
 BOOST_AUTO_TEST_CASE(test_sqrt)
 {
     cuda::config dim(BLOCKS, THREADS);
 
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-
-    cuda::vector<double> d_a(h_a.size());
-    cuda::vector<double> d_b(h_a.size());
+    cuda::vector<double> a(BLOCKS * THREADS);
+    cuda::vector<double> b(a.size());
 
     // create random number generator
     std::default_random_engine gen;
     std::uniform_real_distribution<double> rand(0, 1);
 
-    // generate rundom numbers and copy to device
-    std::generate(h_a.begin(), h_a.end(), std::bind(rand, std::ref(gen)));
-    cuda::copy(h_a.begin(), h_a.end(), d_a.begin());
+    // generate rundom numbers
+    std::generate(a.begin(), a.end(), std::bind(rand, std::ref(gen)));
 
     // configure kernel
     kernel_sqrt.configure(dim.grid, dim.block);
     // launch kernell
-    kernel_sqrt(d_a, d_b);
+    kernel_sqrt(a, b);
 
     // calculate the result on the host
-    cuda::host::vector<double> result(h_a.size());
-    std::transform(h_a.begin(), h_a.end(), result.begin(), [](const double &a) -> double { return std::sqrt(a); });
+    std::vector<double> result(a.size());
+    std::transform(a.begin(), a.end(), result.begin(), [](const double &a) -> double { return std::sqrt(a); });
 
-    // wait for kernel to be finished (if it hasn't already)
+    // wait for kernel to finish (if it hasn't already)
     cuda::thread::synchronize();
-    // copy back result from device to host
-    cuda::copy(d_b.begin(), d_b.end(), h_b.begin());
 
-    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_b.begin(), h_b.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), b.begin(), b.end());
 }

@@ -77,8 +77,12 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
     BOOST_AUTO_TEST_SUITE_END()
 
 
-BOOST_AUTO_TEST_SUITE(device)
+BOOST_AUTO_TEST_SUITE(managed)
     TEST(cuda::allocator)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(device)
+    TEST(cuda::device::allocator)
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(host)

@@ -42,6 +42,8 @@
 # include <cuda_wrapper/allocator.hpp>
 # include <cuda_wrapper/copy.hpp>
 # include <cuda_wrapper/device.hpp>
+# include <cuda_wrapper/device/allocator.hpp>
+# include <cuda_wrapper/device/vector.hpp>
 # include <cuda_wrapper/error.hpp>
 # include <cuda_wrapper/event.hpp>
 # include <cuda_wrapper/host/allocator.hpp>

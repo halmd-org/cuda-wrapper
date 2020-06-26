@@ -8,8 +8,8 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_WRAPPER_HOST_VECTOR_HPP
-#define CUDA_WRAPPER_HOST_VECTOR_HPP
+#ifndef CUDA_HOST_VECTOR_HPP
+#define CUDA_HOST_VECTOR_HPP
 
 #include <vector>
 
@@ -148,4 +148,4 @@ public:
 } // namespace host
 } // namespace cuda
 
-#endif /* ! CUDA_WRAPPER_HOST_VECTOR_HPP */
+#endif /* ! CUDA_HOST_VECTOR_HPP */

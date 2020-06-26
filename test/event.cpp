@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE(timing) {
 
     cuda::host::vector<double> h(BLOCKS * THREADS);
 
-    cuda::vector<double> d_a(h.size());
-    cuda::vector<double> d_b(h.size());
+    cuda::device::vector<double> d_a(h.size());
+    cuda::device::vector<double> d_b(h.size());
 
     // create random number generator
     std::default_random_engine gen;

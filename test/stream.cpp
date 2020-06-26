@@ -46,10 +46,10 @@ BOOST_AUTO_TEST_CASE(stream) {
     cuda::host::vector<double> h_c(h_a.size());
     cuda::host::vector<double> h_d(h_a.size());
 
-    cuda::vector<double> d_a(h_a.size());
-    cuda::vector<double> d_b(h_a.size());
-    cuda::vector<double> d_c(h_a.size());
-    cuda::vector<double> d_d(h_a.size());
+    cuda::device::vector<double> d_a(h_a.size());
+    cuda::device::vector<double> d_b(h_a.size());
+    cuda::device::vector<double> d_c(h_a.size());
+    cuda::device::vector<double> d_d(h_a.size());
 
     // create random number generator
     std::default_random_engine gen;
@@ -100,13 +100,13 @@ BOOST_AUTO_TEST_CASE(stream) {
     BOOST_CHECK(s2.query() == false);
 
     // calculate the results on the host
-    cuda::host::vector<double> result_add(h_a.size());
+    std::vector<double> result_add(h_a.size());
     std::transform(h_a.begin(), h_a.end(), h_b.begin(), result_add.begin(), std::plus<double>());
 
-    cuda::host::vector<double> result_sqrt(h_a.size());
+    std::vector<double> result_sqrt(h_a.size());
     std::transform(h_a.begin(), h_a.end(), result_sqrt.begin(), [](const double &a) -> double { return std::sqrt(a); });
 
-    // wait for kernels to be finished (if they haven't already)
+    // wait for kernels to finish (if they haven't already)
     s1.synchronize();
     s2.synchronize();
 

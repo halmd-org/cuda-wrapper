@@ -308,6 +308,13 @@ public:
             return get_attribute(CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR);
         }
     };
+
+    // forward declerations to make cuda::device:: usable like a namespace
+    template <typename T>
+    class vector;
+
+    template <typename T>
+    struct allocator;
 };
 
 } // namespace cuda

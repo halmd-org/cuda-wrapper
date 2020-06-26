@@ -1,4 +1,4 @@
-/* Allocator that wraps cudaMallocHost -*- C++ -*-
+/* Allocator that wraps cuMemHostAlloc -*- C++ -*-
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
