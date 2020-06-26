@@ -27,11 +27,12 @@ extern cuda::function<void (double const *, double const *, double *)> kernel_ad
 extern cuda::function<void (double const *, double *)> kernel_sqrt;
 
 /*
- * This test uses the kernel_add and kernel_sqrt from the function test.
+ * These tests uses the kernel_add and kernel_sqrt from the function test.
  * Both vectors with input numbers and the results are copied asynchronously.
  * In addition the kernel_add and kernel_sqrt are both launched asynchronously.
  */
-BOOST_AUTO_TEST_CASE(stream) {
+
+BOOST_AUTO_TEST_CASE(normal) {
     // create two streams (both with default flags)
     cuda::stream s1, s2(CU_STREAM_DEFAULT);
 
@@ -138,4 +139,75 @@ BOOST_AUTO_TEST_CASE(stream) {
     // check results
     BOOST_CHECK_EQUAL_COLLECTIONS(result_add.begin(), result_add.end(), h_c.begin(), h_c.end());
     BOOST_CHECK_EQUAL_COLLECTIONS(result_sqrt.begin(), result_sqrt.end(), h_d.begin(), h_d.end());
+}
+
+BOOST_AUTO_TEST_CASE(attach)
+{
+    // create two streams
+    cuda::stream s1;
+    cuda::stream s2;
+
+    // streams should both be empty
+    BOOST_CHECK(s1.query() == true);
+    BOOST_CHECK(s2.query() == true);
+
+    cuda::config dim(BLOCKS, THREADS);
+
+    // create vectors with managed memory
+    cuda::vector<double> a(BLOCKS * THREADS);
+    cuda::vector<double> b(a.size());
+    cuda::vector<double> c(a.size());
+    cuda::vector<double> d(a.size());
+
+    // attach data to stream s1
+    // a is not attached becuase it will be accessed by both streams s1 and s2
+    s1.attach(b.data());
+    s1.attach(c.data());
+
+    // attach data to stream s2
+    s2.attach(d.data());
+
+    // create random number generator
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> rand(0, 1);
+
+    // generate random numbers
+    std::generate(a.begin(), a.end(), std::bind(rand, std::ref(gen)));
+    std::generate(b.begin(), b.end(), std::bind(rand, std::ref(gen)));
+
+    // configure kernels (with two different streams)
+    kernel_add.configure(dim.grid, dim.block, s1);
+    kernel_sqrt.configure(dim.grid, dim.block, s2);
+
+    // launch kernell (in stream s1)
+    kernel_add(a, b, c);
+
+    // stream s1 should now be busy
+    BOOST_CHECK(s1.query() == false);
+
+    // launch kernel (in stream s2)
+    kernel_sqrt(a, d);
+
+    // both streams should now be busy
+    BOOST_CHECK(s1.query() == false);
+    BOOST_CHECK(s2.query() == false);
+
+    // calculate the results on the host
+    std::vector<double> result_add(a.size());
+    std::transform(a.begin(), a.end(), b.begin(), result_add.begin(), std::plus<double>());
+
+    std::vector<double> result_sqrt(a.size());
+    std::transform(a.begin(), a.end(), result_sqrt.begin(), [](const double &a) -> double { return std::sqrt(a); });
+
+    // wait for kernels to finish (if they haven't already)
+    s1.synchronize();
+    s2.synchronize();
+
+    // both streams should be empty
+    BOOST_CHECK(s1.query() == true);
+    BOOST_CHECK(s2.query() == true);
+
+    // check results
+    BOOST_CHECK_EQUAL_COLLECTIONS(result_add.begin(), result_add.end(), c.begin(), c.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result_sqrt.begin(), result_sqrt.end(), d.begin(), d.end());
 }

@@ -86,6 +86,15 @@ public:
     }
 
     /**
+     * attach memory to a stream asynchronously
+     */
+    template <typename T>
+    void attach(T *ptr, size_t s = 0, unsigned int flags = CU_MEM_ATTACH_SINGLE)
+    {
+        CU_CALL(cuStreamAttachMemAsync(m_stream->m_stream, reinterpret_cast<CUdeviceptr>(ptr), s * sizeof(T), flags));
+    }
+
+    /**
      * returns stream
      */
     CUstream data() const
