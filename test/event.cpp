@@ -22,7 +22,7 @@ static const size_t BLOCKS = 4096;
 static const size_t THREADS = 128;
 
 // from function_kernel.cu test
-extern cuda::function<void (double const *, double *)> kernel_sqrt;
+extern cuda::function<void (double const *, double const *, double *)> kernel_add;
 
 BOOST_AUTO_TEST_CASE(timing) {
     // create two events (both with default flags)
@@ -34,23 +34,27 @@ BOOST_AUTO_TEST_CASE(timing) {
 
     cuda::config dim(BLOCKS, THREADS);
 
-    cuda::host::vector<double> h(BLOCKS * THREADS);
+    cuda::host::vector<double> h_a(BLOCKS * THREADS);
+    cuda::host::vector<double> h_b(BLOCKS * THREADS);
 
-    cuda::device::vector<double> d_a(h.size());
-    cuda::device::vector<double> d_b(h.size());
+    cuda::device::vector<double> d_a(h_a.size());
+    cuda::device::vector<double> d_b(h_a.size());
+    cuda::device::vector<double> d_c(h_a.size());
 
     // create random number generator
     std::default_random_engine gen;
     std::uniform_real_distribution<double> rand(0, 1);
 
     // generate random numbers and copy to device
-    std::generate(h.begin(), h.end(), std::bind(rand, std::ref(gen)));
+    std::generate(h_a.begin(), h_a.end(), std::bind(rand, std::ref(gen)));
+    std::generate(h_b.begin(), h_b.end(), std::bind(rand, std::ref(gen)));
 
     // place first event into the default stream
     t1.record();
 
     // copy the data (synchronized by default)
-    cuda::copy(h.begin(), h.end(), d_a.begin());
+    cuda::copy(h_a.begin(), h_a.end(), d_a.begin());
+    cuda::copy(h_b.begin(), h_b.end(), d_b.begin());
 
     // place the second event into the default stream
     t2.record();
@@ -67,13 +71,13 @@ BOOST_AUTO_TEST_CASE(timing) {
     BOOST_CHECK(t2.query() == true);
 
     // configure kernel
-    kernel_sqrt.configure(dim.grid, dim.block);
+    kernel_add.configure(dim.grid, dim.block);
 
     // place first event into the default stream
     t1.record();
 
     // launch kernel
-    kernel_sqrt(d_a, d_b);
+    kernel_add(d_a, d_b, d_c);
     // wait for kernel to finish
     cuda::thread::synchronize();
 

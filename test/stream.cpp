@@ -24,7 +24,6 @@ static const size_t THREADS = 128;
 
 // from function_kernel.cu test
 extern cuda::function<void (double const *, double const *, double *)> kernel_add;
-extern cuda::function<void (double const *, double *)> kernel_sqrt;
 
 /*
  * These tests uses the kernel_add and kernel_sqrt from the function test.
@@ -33,6 +32,9 @@ extern cuda::function<void (double const *, double *)> kernel_sqrt;
  */
 
 BOOST_AUTO_TEST_CASE(normal) {
+    // create second function object from kernel_add
+    cuda::function<void (double const *, double const *, double *)> kernel_add2 = kernel_add;
+
     // create two streams (both with default flags)
     cuda::stream s1, s2(CU_STREAM_DEFAULT);
 
@@ -85,7 +87,7 @@ BOOST_AUTO_TEST_CASE(normal) {
 
     // configure kernels (with two different streams)
     kernel_add.configure(dim.grid, dim.block, s1);
-    kernel_sqrt.configure(dim.grid, dim.block, s2);
+    kernel_add2.configure(dim.grid, dim.block, s2);
 
     // launch kernel (in stream s1)
     kernel_add(d_a, d_b, d_c);
@@ -94,18 +96,15 @@ BOOST_AUTO_TEST_CASE(normal) {
     BOOST_CHECK(s1.query() == false);
 
     // launch kernel (in stream s2)
-    kernel_sqrt(d_a, d_d);
+    kernel_add2(d_a, d_b, d_d);
 
     // both streams should now be busy
     BOOST_CHECK(s1.query() == false);
     BOOST_CHECK(s2.query() == false);
 
-    // calculate the results on the host
-    std::vector<double> result_add(h_a.size());
-    std::transform(h_a.begin(), h_a.end(), h_b.begin(), result_add.begin(), std::plus<double>());
-
-    std::vector<double> result_sqrt(h_a.size());
-    std::transform(h_a.begin(), h_a.end(), result_sqrt.begin(), [](const double &a) -> double { return std::sqrt(a); });
+    // calculate the result on the host
+    std::vector<double> result(h_a.size());
+    std::transform(h_a.begin(), h_a.end(), h_b.begin(), result.begin(), std::plus<double>());
 
     // wait for kernels to finish (if they haven't already)
     s1.synchronize();
@@ -137,12 +136,15 @@ BOOST_AUTO_TEST_CASE(normal) {
     BOOST_CHECK(s2.query() == true);
 
     // check results
-    BOOST_CHECK_EQUAL_COLLECTIONS(result_add.begin(), result_add.end(), h_c.begin(), h_c.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(result_sqrt.begin(), result_sqrt.end(), h_d.begin(), h_d.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_c.begin(), h_c.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), h_d.begin(), h_d.end());
 }
 
 BOOST_AUTO_TEST_CASE(attach)
 {
+    // create second function object from kernel_add
+    cuda::function<void (double const *, double const *, double *)> kernel_add2 = kernel_add;
+
     // create two streams
     cuda::stream s1;
     cuda::stream s2;
@@ -177,7 +179,7 @@ BOOST_AUTO_TEST_CASE(attach)
 
     // configure kernels (with two different streams)
     kernel_add.configure(dim.grid, dim.block, s1);
-    kernel_sqrt.configure(dim.grid, dim.block, s2);
+    kernel_add2.configure(dim.grid, dim.block, s2);
 
     // launch kernell (in stream s1)
     kernel_add(a, b, c);
@@ -186,18 +188,15 @@ BOOST_AUTO_TEST_CASE(attach)
     BOOST_CHECK(s1.query() == false);
 
     // launch kernel (in stream s2)
-    kernel_sqrt(a, d);
+    kernel_add2(a, b, d);
 
     // both streams should now be busy
     BOOST_CHECK(s1.query() == false);
     BOOST_CHECK(s2.query() == false);
 
     // calculate the results on the host
-    std::vector<double> result_add(a.size());
-    std::transform(a.begin(), a.end(), b.begin(), result_add.begin(), std::plus<double>());
-
-    std::vector<double> result_sqrt(a.size());
-    std::transform(a.begin(), a.end(), result_sqrt.begin(), [](const double &a) -> double { return std::sqrt(a); });
+    std::vector<double> result(a.size());
+    std::transform(a.begin(), a.end(), b.begin(), result.begin(), std::plus<double>());
 
     // wait for kernels to finish (if they haven't already)
     s1.synchronize();
@@ -208,6 +207,6 @@ BOOST_AUTO_TEST_CASE(attach)
     BOOST_CHECK(s2.query() == true);
 
     // check results
-    BOOST_CHECK_EQUAL_COLLECTIONS(result_add.begin(), result_add.end(), c.begin(), c.end());
-    BOOST_CHECK_EQUAL_COLLECTIONS(result_sqrt.begin(), result_sqrt.end(), d.begin(), d.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), c.begin(), c.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), d.begin(), d.end());
 }

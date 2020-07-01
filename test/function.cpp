@@ -24,7 +24,6 @@ static const size_t THREADS = 128;
 
 extern cuda::function<void ()> kernel_simple;
 extern cuda::function<void (double const *, double const *, double *)> kernel_add;
-extern cuda::function<void (double const *, double *)> kernel_sqrt;
 
 BOOST_AUTO_TEST_CASE(simple) {
     cuda::config dim(BLOCKS, THREADS);
@@ -71,33 +70,4 @@ BOOST_AUTO_TEST_CASE(add) {
     cuda::thread::synchronize();
 
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), c.begin(), c.end());
-}
-
-BOOST_AUTO_TEST_CASE(test_sqrt)
-{
-    cuda::config dim(BLOCKS, THREADS);
-
-    cuda::vector<double> a(BLOCKS * THREADS);
-    cuda::vector<double> b(a.size());
-
-    // create random number generator
-    std::default_random_engine gen;
-    std::uniform_real_distribution<double> rand(0, 1);
-
-    // generate rundom numbers
-    std::generate(a.begin(), a.end(), std::bind(rand, std::ref(gen)));
-
-    // configure kernel
-    kernel_sqrt.configure(dim.grid, dim.block);
-    // launch kernell
-    kernel_sqrt(a, b);
-
-    // calculate the result on the host
-    std::vector<double> result(a.size());
-    std::transform(a.begin(), a.end(), result.begin(), [](const double &a) -> double { return std::sqrt(a); });
-
-    // wait for kernel to finish (if it hasn't already)
-    cuda::thread::synchronize();
-
-    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), b.begin(), b.end());
 }
