@@ -9,23 +9,24 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_DEVICE_VECTOR_HPP
-#define CUDA_DEVICE_VECTOR_HPP
+#ifndef CUDA_MEMORY_DEVICE_VECTOR_HPP
+#define CUDA_MEMORY_DEVICE_VECTOR_HPP
 
 #include <memory>
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
-#include <cuda_wrapper/device.hpp>
-#include <cuda_wrapper/device/allocator.hpp>
+#include <cuda_wrapper/memory/device/allocator.hpp>
 
 namespace cuda {
+namespace memory {
+namespace device {
 
 /**
  * CUDA global device memory vector
  */
 template <typename T>
-class device::vector
+class vector
 {
 public:
     typedef device::vector<T> vector_type;
@@ -181,6 +182,8 @@ private:
     size_type m_size;
 };
 
+} // namespace device
+} // namespace memory
 } // namespace cuda
 
-#endif /* CUDA_DEVICE_VECTOR_HPP */
+#endif // CUDA_MEMORY_DEVICE_VECTOR_HPP

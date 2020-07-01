@@ -25,6 +25,9 @@ static const size_t THREADS = 128;
 extern cuda::function<void (double const *, double const *, double *)> kernel_add;
 
 BOOST_AUTO_TEST_CASE(timing) {
+    using cuda::memory::device::vector;
+    namespace host = cuda::memory::host;
+
     // create two events (both with default flags)
     cuda::event t1, t2(CU_EVENT_DEFAULT);
 
@@ -34,12 +37,12 @@ BOOST_AUTO_TEST_CASE(timing) {
 
     cuda::config dim(BLOCKS, THREADS);
 
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(BLOCKS * THREADS);
+    host::vector<double> h_a(BLOCKS * THREADS);
+    host::vector<double> h_b(BLOCKS * THREADS);
 
-    cuda::device::vector<double> d_a(h_a.size());
-    cuda::device::vector<double> d_b(h_a.size());
-    cuda::device::vector<double> d_c(h_a.size());
+    vector<double> d_a(h_a.size());
+    vector<double> d_b(h_a.size());
+    vector<double> d_c(h_a.size());
 
     // create random number generator
     std::default_random_engine gen;

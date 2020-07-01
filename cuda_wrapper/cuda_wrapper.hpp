@@ -39,19 +39,19 @@
  */
 
 #ifndef __CUDACC__
-# include <cuda_wrapper/allocator.hpp>
 # include <cuda_wrapper/copy.hpp>
 # include <cuda_wrapper/device.hpp>
-# include <cuda_wrapper/device/allocator.hpp>
-# include <cuda_wrapper/device/vector.hpp>
 # include <cuda_wrapper/error.hpp>
 # include <cuda_wrapper/event.hpp>
-# include <cuda_wrapper/host/allocator.hpp>
-# include <cuda_wrapper/host/vector.hpp>
+# include <cuda_wrapper/memory/device/allocator.hpp>
+# include <cuda_wrapper/memory/device/vector.hpp>
+# include <cuda_wrapper/memory/host/allocator.hpp>
+# include <cuda_wrapper/memory/host/vector.hpp>
+# include <cuda_wrapper/memory/managed/allocator.hpp>
+# include <cuda_wrapper/memory/managed/vector.hpp>
 # include <cuda_wrapper/stream.hpp>
 # include <cuda_wrapper/texture.hpp>
 # include <cuda_wrapper/thread.hpp>
-# include <cuda_wrapper/vector.hpp>
 # include <cuda_wrapper/version.hpp>
 #endif /* ! __CUDACC__ */
 

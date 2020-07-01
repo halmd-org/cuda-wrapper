@@ -1,4 +1,4 @@
-/* Allocator that wraps cuMemHostAlloc -*- C++ -*-
+/* Allocator that wraps cuMemAllocManaged -*- C++ -*-
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
@@ -10,17 +10,19 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_HOST_ALLOCATOR_HPP
-#define CUDA_HOST_ALLOCATOR_HPP
+#ifndef CUDA_MEMORY_MANAGED_ALLOCATOR_HPP
+#define CUDA_MEMORY_MANAGED_ALLOCATOR_HPP
 
 #include <limits>
+#include <new>
 
 #include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
 
 namespace cuda {
-namespace host {
+namespace memory {
+namespace managed {
 
 using std::size_t;
 using std::ptrdiff_t;
@@ -36,8 +38,7 @@ using std::ptrdiff_t;
  */
 
 template <typename T>
-class allocator {
-public:
+struct allocator {
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
@@ -48,11 +49,11 @@ public:
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator(unsigned int flags = 0) throw() : _flags(flags) {}
-    allocator(const allocator& alloc) throw() : _flags(alloc._flags) {}
+    allocator(unsigned int flags = CU_MEM_ATTACH_GLOBAL) throw() : flags_(flags) {}
+    allocator(const allocator& alloc) throw() : flags_(alloc.flags_) {}
 
-    template<typename U>
-    allocator(const allocator<U>& alloc) throw() : _flags(alloc._flags) {}
+    template <typename U>
+    allocator(const allocator<U>& alloc) throw() : flags_(alloc.flags_) {}
 
     ~allocator() throw() {}
 
@@ -61,21 +62,22 @@ public:
 
     pointer allocate(size_type s, void const* = 0)
     {
-        void* p;
+        CUdeviceptr p;
 
+        if (s == 0)
+            return NULL;
         if (__builtin_expect(s > this->max_size(), false))
-        {
             throw std::bad_alloc();
-        }
 
-        CU_CALL(cuMemHostAlloc(&p, s * sizeof(T), _flags));
+        CU_CALL(cuMemAllocManaged(&p, s * sizeof(T), flags_));
 
         return reinterpret_cast<pointer>(p);
     }
 
     void deallocate(pointer p, size_type) throw() // no-throw guarantee
     {
-        cuMemFreeHost(reinterpret_cast<void *>(p));
+        if (p != NULL)
+            cuMemFree(reinterpret_cast<CUdeviceptr>(p));
     }
 
     size_type max_size() const throw()
@@ -94,7 +96,7 @@ public:
     }
 
 private:
-    unsigned int _flags;
+    unsigned int flags_;
 };
 
 template<typename T>
@@ -109,7 +111,11 @@ inline bool operator!=(const allocator<T>&, const allocator<T>&)
     return false;
 }
 
-} // namespace host
+} // namespace managed
+} // namespace memory
+
+// make the managed memory allocator the default
+using memory::managed::allocator;
 } // namespace cuda
 
-#endif
+#endif // CUDA_MEMORY_MANAGED_ALLOCATOR_HPP

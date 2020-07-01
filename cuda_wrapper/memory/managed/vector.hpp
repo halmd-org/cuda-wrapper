@@ -8,18 +8,20 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_VECTOR_HPP
-#define CUDA_VECTOR_HPP
+#ifndef CUDA_MEMORY_MANAGED_VECTOR_HPP
+#define CUDA_MEMORY_MANAGED_VECTOR_HPP
 
 #include <vector>
 
 #include <cuda.h>
 
-#include <cuda_wrapper/allocator.hpp>
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
+#include <cuda_wrapper/memory/managed/allocator.hpp>
 
 namespace cuda {
+namespace memory {
+namespace managed {
 
 /**
  * CUDA managed memory vector
@@ -96,6 +98,11 @@ public:
 
 };
 
+} // namespace managed
+} // namespace memory
+
+// make the managed memory vector the default
+using memory::managed::vector;
 } // namespace cuda
 
-#endif /* ! CUDA_VECTOR_HPP */
+#endif // CUDA_MEMORY_MANAGED_VECTOR_HPP

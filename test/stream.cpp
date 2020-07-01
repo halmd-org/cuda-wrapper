@@ -32,6 +32,9 @@ extern cuda::function<void (double const *, double const *, double *)> kernel_ad
  */
 
 BOOST_AUTO_TEST_CASE(normal) {
+    using cuda::memory::device::vector;
+    namespace host = cuda::memory::host;
+
     // create second function object from kernel_add
     cuda::function<void (double const *, double const *, double *)> kernel_add2 = kernel_add;
 
@@ -44,15 +47,15 @@ BOOST_AUTO_TEST_CASE(normal) {
 
     cuda::config dim(BLOCKS, THREADS);
 
-    cuda::host::vector<double> h_a(BLOCKS * THREADS);
-    cuda::host::vector<double> h_b(h_a.size());
-    cuda::host::vector<double> h_c(h_a.size());
-    cuda::host::vector<double> h_d(h_a.size());
+    host::vector<double> h_a(BLOCKS * THREADS);
+    host::vector<double> h_b(h_a.size());
+    host::vector<double> h_c(h_a.size());
+    host::vector<double> h_d(h_a.size());
 
-    cuda::device::vector<double> d_a(h_a.size());
-    cuda::device::vector<double> d_b(h_a.size());
-    cuda::device::vector<double> d_c(h_a.size());
-    cuda::device::vector<double> d_d(h_a.size());
+    vector<double> d_a(h_a.size());
+    vector<double> d_b(h_a.size());
+    vector<double> d_c(h_a.size());
+    vector<double> d_d(h_a.size());
 
     // create random number generator
     std::default_random_engine gen;

@@ -8,18 +8,19 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_HOST_VECTOR_HPP
-#define CUDA_HOST_VECTOR_HPP
+#ifndef CUDA_MEMORY_HOST_VECTOR_HPP
+#define CUDA_MEMORY_HOST_VECTOR_HPP
 
 #include <vector>
 
 #include <cuda.h>
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
-#include <cuda_wrapper/host/allocator.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
+#include <cuda_wrapper/memory/host/allocator.hpp>
 
 namespace cuda {
+namespace memory {
 namespace host {
 
 /**
@@ -146,6 +147,7 @@ public:
 };
 
 } // namespace host
+} // namespace memory
 } // namespace cuda
 
-#endif /* ! CUDA_HOST_VECTOR_HPP */
+#endif // CUDA_MEMORY_HOST_VECTOR_HPP

@@ -1,4 +1,4 @@
-/* Allocator that wraps cuMemAlloc -*- C++ -*-
+/* Allocator that wraps cuMemHostAlloc -*- C++ -*-
  *
  * Copyright (C) 2016 Felix Höfling
  * Copyright (C) 2008 Peter Colberg
@@ -10,8 +10,8 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
-#ifndef CUDA_DEVICE_ALLOCATOR_HPP
-#define CUDA_DEVICE_ALLOCATOR_HPP
+#ifndef CUDA_MEMORY_HOST_ALLOCATOR_HPP
+#define CUDA_MEMORY_HOST_ALLOCATOR_HPP
 
 #include <limits>
 #include <new>
@@ -19,10 +19,10 @@
 #include <cuda.h>
 
 #include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/device.hpp>
-#include <stdio.h>
 
 namespace cuda {
+namespace memory {
+namespace host {
 
 using std::size_t;
 using std::ptrdiff_t;
@@ -38,7 +38,8 @@ using std::ptrdiff_t;
  */
 
 template <typename T>
-struct device::allocator {
+class allocator {
+public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
@@ -49,11 +50,11 @@ struct device::allocator {
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator() throw() {}
-    allocator(const allocator&) throw() {}
+    allocator(unsigned int flags = 0) throw() : _flags(flags) {}
+    allocator(const allocator& alloc) throw() : _flags(alloc._flags) {}
 
-    template <typename U>
-    allocator(const allocator<U>&) throw() {}
+    template<typename U>
+    allocator(const allocator<U>& alloc) throw() : _flags(alloc._flags) {}
 
     ~allocator() throw() {}
 
@@ -62,22 +63,21 @@ struct device::allocator {
 
     pointer allocate(size_type s, void const* = 0)
     {
-        CUdeviceptr p;
+        void* p;
 
-        if (s == 0)
-            return NULL;
         if (__builtin_expect(s > this->max_size(), false))
+        {
             throw std::bad_alloc();
+        }
 
-        CU_CALL(cuMemAlloc(&p, s * sizeof(T)));
+        CU_CALL(cuMemHostAlloc(&p, s * sizeof(T), _flags));
 
         return reinterpret_cast<pointer>(p);
     }
 
     void deallocate(pointer p, size_type) throw() // no-throw guarantee
     {
-        if (p != NULL)
-            cuMemFree(reinterpret_cast<CUdeviceptr>(p));
+        cuMemFreeHost(reinterpret_cast<void *>(p));
     }
 
     size_type max_size() const throw()
@@ -94,20 +94,25 @@ struct device::allocator {
     {
         p->~T();
     }
+
+private:
+    unsigned int _flags;
 };
 
 template<typename T>
-inline bool operator==(const device::allocator<T>&, const device::allocator<T>&)
+inline bool operator==(const allocator<T>&, const allocator<T>&)
 {
     return true;
 }
 
 template<typename T>
-inline bool operator!=(const device::allocator<T>&, const device::allocator<T>&)
+inline bool operator!=(const allocator<T>&, const allocator<T>&)
 {
     return false;
 }
 
+} // namespace host
+} // namespace memory
 } // namespace cuda
 
-#endif
+#endif // CUDA_MEMORY_HOST_ALLOCATOR_HPP

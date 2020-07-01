@@ -19,6 +19,9 @@
 
 #include "test.hpp"
 
+using cuda::memory::device::vector;
+namespace host = cuda::memory::host;
+
 BOOST_AUTO_TEST_SUITE( global_device_memory )
 
 /**
@@ -26,8 +29,8 @@ BOOST_AUTO_TEST_SUITE( global_device_memory )
  */
 BOOST_AUTO_TEST_CASE( nonconst_iterator )
 {
-    cuda::host::vector<int> h_i(10000);
-    cuda::device::vector<int> g_i(h_i.size());
+    host::vector<int> h_i(10000);
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -39,7 +42,7 @@ BOOST_AUTO_TEST_CASE( nonconst_iterator )
       , g_i.begin()) == g_i.end()
     );
 
-    cuda::host::vector<int> h_j(10000);
+    host::vector<int> h_j(10000);
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -68,7 +71,7 @@ BOOST_AUTO_TEST_CASE( nonconst_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -121,22 +124,22 @@ BOOST_AUTO_TEST_CASE( nonconst_iterator )
  */
 BOOST_AUTO_TEST_CASE( const_iterator )
 {
-    cuda::host::vector<int> h_i(99999);
-    cuda::device::vector<int> g_i(h_i.size());
+    host::vector<int> h_i(99999);
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
       , h_i.begin()
     );
-    cuda::host::vector<int> const& h_i_const(h_i);
+    host::vector<int> const& h_i_const(h_i);
     BOOST_CHECK( cuda::copy(
         h_i_const.begin()
       , h_i_const.end()
       , g_i.begin()) == g_i.end()
     );
 
-    cuda::host::vector<int> h_j(99999);
-    cuda::device::vector<int> const& g_i_const(g_i);
+    host::vector<int> h_j(99999);
+    vector<int> const& g_i_const(g_i);
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
@@ -165,13 +168,13 @@ BOOST_AUTO_TEST_CASE( const_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
       , g_j.begin()) == g_j.end()
     );
-    cuda::device::vector<int> const& g_j_const(g_j);
+    vector<int> const& g_j_const(g_j);
     BOOST_CHECK( cuda::copy(
         g_j_const.begin()
       , g_j_const.end()
@@ -220,7 +223,7 @@ BOOST_AUTO_TEST_CASE( const_iterator )
 BOOST_AUTO_TEST_CASE( std_vector_iterator )
 {
     std::vector<int> h_i(999);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -261,7 +264,7 @@ BOOST_AUTO_TEST_CASE( std_vector_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -315,7 +318,7 @@ BOOST_AUTO_TEST_CASE( std_vector_iterator )
 BOOST_AUTO_TEST_CASE( std_vector_const_iterator )
 {
     std::vector<int> h_i(100000);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -329,7 +332,7 @@ BOOST_AUTO_TEST_CASE( std_vector_const_iterator )
     );
 
     std::vector<int> h_j(100000);
-    cuda::device::vector<int> const& g_i_const(g_i);
+    vector<int> const& g_i_const(g_i);
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
@@ -358,13 +361,13 @@ BOOST_AUTO_TEST_CASE( std_vector_const_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
       , g_j.begin()) == g_j.end()
     );
-    cuda::device::vector<int> const& g_j_const(g_j);
+    vector<int> const& g_j_const(g_j);
     BOOST_CHECK( cuda::copy(
         g_j_const.begin()
       , g_j_const.end()
@@ -413,7 +416,7 @@ BOOST_AUTO_TEST_CASE( std_vector_const_iterator )
 BOOST_AUTO_TEST_CASE( boost_ublas_vector_iterator )
 {
     boost::numeric::ublas::vector<int> h_i(999);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -454,7 +457,7 @@ BOOST_AUTO_TEST_CASE( boost_ublas_vector_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -508,7 +511,7 @@ BOOST_AUTO_TEST_CASE( boost_ublas_vector_iterator )
 BOOST_AUTO_TEST_CASE( boost_ublas_vector_const_iterator )
 {
     boost::numeric::ublas::vector<int> h_i(100000);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -522,7 +525,7 @@ BOOST_AUTO_TEST_CASE( boost_ublas_vector_const_iterator )
     );
 
     boost::numeric::ublas::vector<int> h_j(100000);
-    cuda::device::vector<int> const& g_i_const(g_i);
+    vector<int> const& g_i_const(g_i);
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
@@ -551,13 +554,13 @@ BOOST_AUTO_TEST_CASE( boost_ublas_vector_const_iterator )
       , h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
       , g_j.begin()) == g_j.end()
     );
-    cuda::device::vector<int> const& g_j_const(g_j);
+    vector<int> const& g_j_const(g_j);
     BOOST_CHECK( cuda::copy(
         g_j_const.begin()
       , g_j_const.end()
@@ -606,7 +609,7 @@ BOOST_AUTO_TEST_CASE( boost_ublas_vector_const_iterator )
 BOOST_AUTO_TEST_CASE( pointer )
 {
     std::vector<int> h_i(100001);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -647,7 +650,7 @@ BOOST_AUTO_TEST_CASE( pointer )
       , &*h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -701,7 +704,7 @@ BOOST_AUTO_TEST_CASE( pointer )
 BOOST_AUTO_TEST_CASE( const_pointer )
 {
     std::vector<int> h_i(424242);
-    cuda::device::vector<int> g_i(h_i.size());
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -715,7 +718,7 @@ BOOST_AUTO_TEST_CASE( const_pointer )
     );
 
     std::vector<int> h_j(424242);
-    cuda::device::vector<int> const& g_i_const(g_i);
+    vector<int> const& g_i_const(g_i);
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
@@ -744,13 +747,13 @@ BOOST_AUTO_TEST_CASE( const_pointer )
       , &*h_i.end()
       , g_i.begin()) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
       , g_j.begin()) == g_j.end()
     );
-    cuda::device::vector<int> const& g_j_const(g_j);
+    vector<int> const& g_j_const(g_j);
     BOOST_CHECK( cuda::copy(
         g_j_const.begin()
       , g_j_const.end()
@@ -799,8 +802,8 @@ BOOST_AUTO_TEST_CASE( const_pointer )
 BOOST_AUTO_TEST_CASE( asynchronous )
 {
     cuda::stream stream;
-    cuda::host::vector<int> h_i(10000);
-    cuda::device::vector<int> g_i(h_i.size());
+    host::vector<int> h_i(10000);
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -813,7 +816,7 @@ BOOST_AUTO_TEST_CASE( asynchronous )
       , stream) == g_i.end()
     );
 
-    cuda::host::vector<int> h_j(10000);
+    host::vector<int> h_j(10000);
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -845,7 +848,7 @@ BOOST_AUTO_TEST_CASE( asynchronous )
       , g_i.begin()
       , stream) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()
@@ -904,14 +907,14 @@ BOOST_AUTO_TEST_CASE( asynchronous )
 BOOST_AUTO_TEST_CASE( asynchronous_const_iterators )
 {
     cuda::stream stream;
-    cuda::host::vector<int> h_i(10000);
-    cuda::device::vector<int> g_i(h_i.size());
+    host::vector<int> h_i(10000);
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
       , h_i.begin()
     );
-    cuda::host::vector<int> const& h_i_const(h_i);
+    host::vector<int> const& h_i_const(h_i);
     BOOST_CHECK( cuda::copy(
         h_i_const.begin()
       , h_i_const.end()
@@ -919,8 +922,8 @@ BOOST_AUTO_TEST_CASE( asynchronous_const_iterators )
       , stream) == g_i.end()
     );
 
-    cuda::host::vector<int> h_j(10000);
-    cuda::device::vector<int> const& g_i_const(g_i);
+    host::vector<int> h_j(10000);
+    vector<int> const& g_i_const(g_i);
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
@@ -952,14 +955,14 @@ BOOST_AUTO_TEST_CASE( asynchronous_const_iterators )
       , g_i.begin()
       , stream) == g_i.end()
     );
-    cuda::device::vector<int> g_j(h_i.size());
+    vector<int> g_j(h_i.size());
     BOOST_CHECK( cuda::copy(
         g_i_const.begin()
       , g_i_const.end()
       , g_j.begin()
       , stream) == g_j.end()
     );
-    cuda::device::vector<int> const& g_j_const(g_j);
+    vector<int> const& g_j_const(g_j);
     BOOST_CHECK( cuda::copy(
         g_j_const.begin()
       , g_j_const.end()
@@ -1011,8 +1014,8 @@ BOOST_AUTO_TEST_CASE( asynchronous_const_iterators )
  */
 BOOST_AUTO_TEST_CASE( memset_iterators )
 {
-    cuda::host::vector<int> h_i(10000);
-    cuda::device::vector<int> g_i(h_i.size());
+    host::vector<int> h_i(10000);
+    vector<int> g_i(h_i.size());
     std::copy(
         boost::counting_iterator<int>(0)
       , boost::counting_iterator<int>(h_i.size())
@@ -1024,7 +1027,7 @@ BOOST_AUTO_TEST_CASE( memset_iterators )
       , g_i.begin()) == g_i.end()
     );
 
-    cuda::host::vector<int> h_j(10000);
+    host::vector<int> h_j(10000);
     BOOST_CHECK( cuda::copy(
         g_i.begin()
       , g_i.end()

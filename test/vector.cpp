@@ -16,6 +16,8 @@
 
 #include "test.hpp"
 
+//using namespace cuda::memory;
+
 #define TEST_CASE(type, dataset)                                               \
     BOOST_DATA_TEST_CASE(allocate, dataset, n) {                               \
         type v(n);                                                             \
@@ -75,13 +77,13 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
 
 
 BOOST_AUTO_TEST_SUITE(managed)
-    TEST(cuda::vector)
+  TEST(cuda::memory::managed::vector)
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(device)
-    TEST(cuda::device::vector)
+    TEST(cuda::memory::device::vector)
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(host)
-    TEST(cuda::host::vector)
+    TEST(cuda::memory::host::vector)
 BOOST_AUTO_TEST_SUITE_END()
