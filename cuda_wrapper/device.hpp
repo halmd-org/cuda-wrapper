@@ -120,7 +120,7 @@ public:
         return num_;
     }
 
-    /*
+    /**
      * cleans up all runtime-related resources associated with calling thread
      */
     void reset()
@@ -141,7 +141,7 @@ public:
     class properties
     {
     private:
-        /*
+        /**
          * retrieve the information of attribute attr
          */
         int get_attribute(CUdevice_attribute attr) const

@@ -23,7 +23,7 @@
 
 namespace cuda {
 
-/*
+/**
  * CUDA execution configuration
  */
 struct config
@@ -148,41 +148,65 @@ public:
         CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p, shared_mem_, stream_));
     }
 
+    /**
+     * binary architecture version for which the kernel was compiled
+     */
     unsigned int binary_version()
     {
         return attributes()->binaryVersion;
     }
 
+    /**
+     * size of constant memory required by the kernel
+     */
     size_t const_size_bytes()
     {
         return attributes()->constSizeBytes;
     }
 
+    /**
+     * size of local memory used by each thread
+     */
     size_t local_size_bytes()
     {
         return attributes()->localSizeBytes;
     }
 
+    /**
+     * the maximum number of threads per block
+     */
     unsigned int max_threads_per_block()
     {
         return attributes()->maxThreadsPerBlock;
     }
 
+    /**
+     * number of registers used by each thread
+     */
     unsigned int num_regs()
     {
         return attributes()->numRegs;
     }
 
+    /**
+     * ptx architecture for which the kernerl was compiled
+     */
     unsigned int ptx_version()
     {
         return attributes()->ptxVersion;
     }
 
+    /**
+     * size of shared memory per block
+     */
     size_t shared_size_bytes()
     {
         return attributes()->sharedSizeBytes;
     }
 
+    /**
+     * grid size that archieves maximum occupancy
+     */
     int min_grid_size()
     {
         if (min_grid_size_ < 0) {
@@ -191,6 +215,9 @@ public:
         return min_grid_size_;
     }
 
+    /**
+     * block size that archieves maximum occupancy
+     */
     int max_block_size()
     {
         if (max_block_size_ < 0) {

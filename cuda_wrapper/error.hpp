@@ -42,20 +42,20 @@
 
 namespace cuda {
 
-/*
+    /**
  * CUDA error handling
  */
 class error : public std::exception
 {
 public:
-    /* CUDA runtime or CUDA driver error */
+    // CUDA runtime or CUDA driver error
     const int err;
     const bool runtime;
 
     error(cudaError_t err) : err(err), runtime(true) {}
     error(CUresult err): err(err), runtime(false) {}
 
-    /*
+    /**
      * returns a message string for either CUDA runtime or CUDA driver error
      */
     char const* what() const throw()

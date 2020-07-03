@@ -27,7 +27,7 @@ namespace managed {
 using std::size_t;
 using std::ptrdiff_t;
 
-/*
+/**
  * The implementation of a custom allocator class for the STL is described
  * here and there:
  * http://www.codeproject.com/Articles/4795/C-Standard-Allocator-An-Introduction-and-Implement
@@ -36,7 +36,6 @@ using std::ptrdiff_t;
  * The same pattern is used in ext/malloc_allocator.h of the GNU Standard C++
  * Library, which wraps "C" malloc.
  */
-
 template <typename T>
 struct allocator {
     typedef size_t size_type;

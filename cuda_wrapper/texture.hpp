@@ -19,6 +19,9 @@
 
 namespace cuda {
 
+/**
+* CUDA texture object wrapper class
+*/
 template <typename T, size_t dim = 1, cudaTextureReadMode mode = cudaReadModeElementType>
 class texture
 {
