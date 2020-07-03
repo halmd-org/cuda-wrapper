@@ -30,28 +30,27 @@ protected:
 public:
     typedef Category iterator_category;
     typedef typename std::iterator_traits<Iterator>::value_type value_type;
-    typedef typename std::iterator_traits<Iterator>::difference_type
-        difference_type;
+    typedef typename std::iterator_traits<Iterator>::difference_type difference_type;
     typedef typename std::iterator_traits<Iterator>::reference reference;
     typedef typename std::iterator_traits<Iterator>::pointer pointer;
 
     random_access_iterator() : current_(Iterator()) {}
 
-    explicit random_access_iterator(const Iterator& i) : current_(i) {}
+    explicit random_access_iterator(Iterator const& i) : current_(i) {}
 
     template <typename OtherIterator>
-    random_access_iterator(const random_access_iterator<
-        OtherIterator,
-        typename std::enable_if<
-            std::is_convertible<OtherIterator, Iterator>::value,
-            Category
-    >::type>& other) : current_(other.base()) {}
+    random_access_iterator(random_access_iterator<
+        OtherIterator
+      , typename std::enable_if<
+            std::is_convertible<OtherIterator, Iterator>::value
+          , Category
+    >::type> const& other) : current_(other.base()) {}
 
-    const Iterator& base() const { return current_; }
+    Iterator const& base() const { return current_; }
 
     reference operator*() const { return* current_; }
     pointer operator->() const { return current_; }
-    reference operator[](const difference_type& n) const
+    reference operator[](difference_type const& n) const
     {
         return current_[n];
     }
@@ -76,84 +75,84 @@ public:
         return random_access_iterator(current_--);
     }
 
-    random_access_iterator& operator+=(const difference_type& n)
+    random_access_iterator& operator+=(difference_type const& n)
     {
         current_ += n;
         return* this;
     }
 
-    random_access_iterator operator+(const difference_type& n) const
+    random_access_iterator operator+(difference_type const& n) const
     {
         return random_access_iterator(current_ + n);
     }
 
-    random_access_iterator& operator-=(const difference_type& n)
+    random_access_iterator& operator-=(difference_type const& n)
     {
         current_ -= n;
         return* this;
     }
 
-    random_access_iterator operator-(const difference_type& n) const
+    random_access_iterator operator-(difference_type const& n) const
     {
         return random_access_iterator(current_ - n);
     }
 };
 
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator==(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator==(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() == rhs.base();
 }
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator!=(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator!=(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() != rhs.base();
 }
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator<(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator<(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() < rhs.base();
 }
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator>(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator>(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() > rhs.base();
 }
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator<=(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator<=(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() <= rhs.base();
 }
 template <typename IteratorL, typename IteratorR, class Category>
-inline bool operator>=(const random_access_iterator<IteratorL, Category>& lhs,
-    const random_access_iterator<IteratorR, Category>& rhs)
+inline bool operator>=(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() >= rhs.base();
 }
 
 template<typename IteratorL, typename IteratorR, class Category>
 inline typename random_access_iterator<IteratorL, Category>::difference_type
-operator-(const random_access_iterator<IteratorL, Category>& lhs,
-          const random_access_iterator<IteratorR, Category>& rhs)
+operator-(random_access_iterator<IteratorL, Category> const& lhs
+  , random_access_iterator<IteratorR, Category> const& rhs)
 {
     return lhs.base() - rhs.base();
 }
 template<typename Iterator, class Category>
 inline typename random_access_iterator<Iterator, Category>::difference_type
-operator-(const random_access_iterator<Iterator, Category>& lhs,
-          const random_access_iterator<Iterator, Category>& rhs)
+operator-(random_access_iterator<Iterator, Category> const& lhs
+  , random_access_iterator<Iterator, Category> const& rhs)
 {
     return lhs.base() - rhs.base();
 }
 template <typename Iterator, class Category>
 inline random_access_iterator<Iterator, Category>
-operator+(typename random_access_iterator<Iterator, Category>::difference_type
-    n, const random_access_iterator<Iterator, Category>& i)
+operator+(typename random_access_iterator<Iterator, Category>::difference_type n
+  , random_access_iterator<Iterator, Category> const& i)
 {
     return random_access_iterator<Iterator, Category>(i.base() + n);
 }

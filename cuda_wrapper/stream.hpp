@@ -32,8 +32,8 @@ private:
         /**
          * make the class noncopyable by deleting the copy and assignment operator
          */
-        container(const container&) = delete;
-        container& operator=(const container&) = delete;
+        container(container const&) = delete;
+        container& operator=(container const&) = delete;
 
         /**
          * creates a stream
@@ -77,19 +77,20 @@ public:
     bool query()
     {
         CUresult res = cuStreamQuery(m_stream->m_stream);
-        if (res == CUDA_SUCCESS)
+        if (res == CUDA_SUCCESS) {
             return true;
-        else if (res == CUDA_ERROR_NOT_READY)
+        } else if (res == CUDA_ERROR_NOT_READY) {
             return false;
-        else
+        } else {
             CU_ERROR(res);
+        }
     }
 
     /**
      * attach memory to a stream asynchronously
      */
     template <typename T>
-    void attach(T *ptr, size_t s = 0, unsigned int flags = CU_MEM_ATTACH_SINGLE)
+    void attach(T* ptr, size_t s = 0, unsigned int flags = CU_MEM_ATTACH_SINGLE)
     {
         CU_CALL(cuStreamAttachMemAsync(m_stream->m_stream, reinterpret_cast<CUdeviceptr>(ptr), s * sizeof(T), flags));
     }

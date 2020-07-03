@@ -42,18 +42,18 @@ struct allocator {
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
-    typedef const T* const_pointer;
+    typedef T const* const_pointer;
     typedef T& reference;
-    typedef const T& const_reference;
+    typedef T const& const_reference;
     typedef T value_type;
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
     allocator(unsigned int flags = CU_MEM_ATTACH_GLOBAL) noexcept : flags_(flags) {}
-    allocator(const allocator& alloc) noexcept : flags_(alloc.flags_) {}
+    allocator(allocator const& alloc) noexcept : flags_(alloc.flags_) {}
 
     template <typename U>
-    allocator(const allocator<U>& alloc) noexcept : flags_(alloc.flags_) {}
+    allocator(allocator<U> const& alloc) noexcept : flags_(alloc.flags_) {}
 
     ~allocator() {}
 
@@ -64,10 +64,12 @@ struct allocator {
     {
         CUdeviceptr p;
 
-        if (s == 0)
+        if (s == 0) {
             return NULL;
-        if (__builtin_expect(s > this->max_size(), false))
+        }
+        if (__builtin_expect(s > this->max_size(), false)) {
             throw std::bad_alloc();
+        }
 
         CU_CALL(cuMemAllocManaged(&p, s * sizeof(T), flags_));
 
@@ -76,8 +78,9 @@ struct allocator {
 
     void deallocate(pointer p, size_type) noexcept // no-throw guarantee
     {
-        if (p != NULL)
+        if (p != NULL) {
             cuMemFree(reinterpret_cast<CUdeviceptr>(p));
+        }
     }
 
     size_type max_size() const noexcept
@@ -85,9 +88,9 @@ struct allocator {
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }
 
-    void construct(pointer p, const T& val)
+    void construct(pointer p, T const& val)
     {
-        ::new((void *)p) T(val);
+        ::new((void*) p) T(val);
     }
 
     void destroy(pointer p)
@@ -100,13 +103,13 @@ private:
 };
 
 template<typename T>
-inline bool operator==(const allocator<T>&, const allocator<T>&)
+inline bool operator==(allocator<T> const&, allocator<T> const&)
 {
     return true;
 }
 
 template<typename T>
-inline bool operator!=(const allocator<T>&, const allocator<T>&)
+inline bool operator!=(allocator<T> const&, allocator<T> const&)
 {
     return false;
 }

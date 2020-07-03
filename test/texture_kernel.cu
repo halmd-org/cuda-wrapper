@@ -9,10 +9,10 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-__global__ void __kernel_add(cudaTextureObject_t a, cudaTextureObject_t b, float *d_c)
+__global__ void __kernel_add(cudaTextureObject_t a, cudaTextureObject_t b, float* d_c)
 {
     unsigned int gid = threadIdx.x + blockIdx.x * blockDim.x;
     d_c[gid] = tex1Dfetch<float>(a, gid) + tex1Dfetch<float>(b, gid);
 }
 
-cuda::function<void (cudaTextureObject_t, cudaTextureObject_t, float *)> kernel_add(__kernel_add);
+cuda::function<void (cudaTextureObject_t, cudaTextureObject_t, float*)> kernel_add(__kernel_add);

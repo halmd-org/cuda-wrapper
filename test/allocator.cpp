@@ -20,7 +20,7 @@
 #define TEST_CASE(type, dataset)                                               \
     type A;                                                                    \
     BOOST_DATA_TEST_CASE(allocate, dataset, n) {                               \
-        type::value_type *ptr = A.allocate(n);                                 \
+        type::value_type* ptr = A.allocate(n);                                 \
         BOOST_TEST(ptr == A.address(*ptr));                                    \
         A.deallocate(ptr, n);                                                  \
     }

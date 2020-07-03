@@ -32,8 +32,8 @@ private:
         /**
          * make the class noncopyable by deleting the copy and assignment operator
          */
-        container(const container&) = delete;
-        container& operator=(const container&) = delete;
+        container(container const&) = delete;
+        container& operator=(container const&) = delete;
 
         /**
          * creates an event
@@ -58,8 +58,7 @@ public:
     /**
      * creates an event with given flags
      */
-    event(unsigned int flags = CU_EVENT_DEFAULT)
-        : m_event(new container(flags)) {}
+    event(unsigned int flags = CU_EVENT_DEFAULT) : m_event(new container(flags)) {}
 
     /**
      * records an event
@@ -76,7 +75,7 @@ public:
      *
      * after all preceding operations in the stream have been completed
      */
-    void record(const stream& stream)
+    void record(stream const& stream)
     {
         CU_CALL(cuEventRecord(m_event->m_event, stream.data()));
     }
@@ -97,10 +96,11 @@ public:
     bool query()
     {
         CUresult res = cuEventQuery(m_event->m_event);
-        if (res == CUDA_SUCCESS)
+        if (res == CUDA_SUCCESS) {
             return true;
-        else if (res == CUDA_ERROR_NOT_READY)
+        } else if (res == CUDA_ERROR_NOT_READY) {
             return false;
+        }
         CU_ERROR(res);
     }
 
@@ -109,7 +109,7 @@ public:
      *
      * (in seconds with a resolution of around 0.5 microseconds)
      */
-    float operator-(const event &start)
+    float operator-(event const& start)
     {
         float time;
         CU_CALL(cuEventElapsedTime(&time, start.m_event->m_event, m_event->m_event));

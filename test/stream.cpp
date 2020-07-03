@@ -23,7 +23,7 @@ static const size_t BLOCKS = 4096;
 static const size_t THREADS = 128;
 
 // from function_kernel.cu test
-extern cuda::function<void (double const *, double const *, double *)> kernel_add;
+extern cuda::function<void (double const*, double const*, double*)> kernel_add;
 
 /*
  * These tests uses the kernel_add and kernel_sqrt from the function test.
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(normal) {
     namespace host = cuda::memory::host;
 
     // create second function object from kernel_add
-    cuda::function<void (double const *, double const *, double *)> kernel_add2 = kernel_add;
+    cuda::function<void (double const*, double const*, double*)> kernel_add2 = kernel_add;
 
     // create two streams (both with default flags)
     cuda::stream s1, s2(CU_STREAM_DEFAULT);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(normal) {
 BOOST_AUTO_TEST_CASE(attach)
 {
     // create second function object from kernel_add
-    cuda::function<void (double const *, double const *, double *)> kernel_add2 = kernel_add;
+    cuda::function<void (double const*, double const*, double*)> kernel_add2 = kernel_add;
 
     // create two streams
     cuda::stream s1;

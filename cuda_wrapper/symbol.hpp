@@ -56,7 +56,7 @@ public:
     /**
      * copy from host value to device symbol
      */
-    void set(const T& src) const
+    void set(T const& src) const
     {
         CUDA_CALL(cudaMemcpyToSymbol(ptr_, &src, sizeof(T), 0, cudaMemcpyHostToDevice));
     }
@@ -89,7 +89,7 @@ public:
     /**
      * initialize device symbol vector
      */
-    symbol(const T* array) : ptr_(array) , size_(sizeof(array) / sizeof(value_type)) {}
+    symbol(T const* array) : ptr_(array) , size_(sizeof(array) / sizeof(value_type)) {}
 
     /**
      * return element count of device symbol
@@ -111,7 +111,7 @@ public:
     /**
      * copy from host memory area to device symbol
      */
-    void set(const T* src) const
+    void set(T const* src) const
     {
         CUDA_CALL(cudaMemcpyToSymbol(ptr_, src, size_ * sizeof(T), 0, cudaMemcpyHostToDevice));
     }

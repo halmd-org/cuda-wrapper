@@ -19,7 +19,7 @@
 static const size_t BLOCKS = 4096;
 static const size_t THREADS = 128;
 
-extern cuda::function<void (cudaTextureObject_t, cudaTextureObject_t, float *)> kernel_add;
+extern cuda::function<void (cudaTextureObject_t, cudaTextureObject_t, float*)> kernel_add;
 
 BOOST_AUTO_TEST_CASE(managed) {
     cuda::config dim(BLOCKS, THREADS);

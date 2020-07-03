@@ -70,8 +70,8 @@ class function<void (Args...)>
 private:
     typedef void (*T)(Args...);
 
-    const void *f_;
-    std::function<void (int *, int *)> occupancy_;
+    const void* f_;
+    std::function<void (int*, int*)> occupancy_;
 
     dim3 grid_ = 0;
     dim3 block_ = 0;
@@ -83,28 +83,29 @@ private:
 
     cudaFuncAttributes attr_ = {};
 
-    cudaFuncAttributes *attributes()
+    cudaFuncAttributes* attributes()
     {
-        if (attr_.binaryVersion == 0)
+        if (attr_.binaryVersion == 0) {
             CUDA_CALL(cudaFuncGetAttributes(&attr_, f_));
+        }
         return &attr_;
     }
 
 public:
-    function(T f) : f_(reinterpret_cast<const void *>(f))
+    function(T f) : f_(reinterpret_cast<void const*>(f))
     {
 #ifdef __CUDACC__
-        occupancy_ = std::function<void (int *, int *)>([&](int *min_grid_size, int *max_block_size) {
+        occupancy_ = std::function<void (int*, int*)>([&](int* min_grid_size, int* max_block_size) {
             cudaOccupancyMaxPotentialBlockSize(min_grid_size, max_block_size, f_);
         });
 #endif
     }
 
     template <typename SMemSizeFunc>
-    function(T f, SMemSizeFunc smem_size_func) : f_(reinterpret_cast<const void *>(f))
+    function(T f, SMemSizeFunc smem_size_func) : f_(reinterpret_cast<void const*>(f))
     {
 #ifdef __CUDACC__
-        occupancy_ = std::function<void (int *, int *)>([&, smem_size_func](int *min_grid_size, int *max_block_size) {
+        occupancy_ = std::function<void (int*, int*)>([&, smem_size_func](int* min_grid_size, int* max_block_size) {
             cudaOccupancyMaxPotentialBlockSizeVariableSMem(min_grid_size, max_block_size, f_, smem_size_func);
         });
 #endif
@@ -143,7 +144,7 @@ public:
      */
     void operator()(Args... args) const
     {
-        void *p[] = {static_cast<void *>(&args)...};
+        void* p[] = {static_cast<void*>(&args)...};
         CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p, shared_mem_, stream_));
     }
 
@@ -184,15 +185,17 @@ public:
 
     int min_grid_size()
     {
-        if (min_grid_size_ < 0)
+        if (min_grid_size_ < 0) {
             occupancy_(&min_grid_size_, &max_block_size_);
+        }
         return min_grid_size_;
     }
 
     int max_block_size()
     {
-        if (max_block_size_ < 0)
+        if (max_block_size_ < 0) {
             occupancy_(&min_grid_size_, &max_block_size_);
+        }
         return max_block_size_;
     }
 #endif // ! __CUDACC__

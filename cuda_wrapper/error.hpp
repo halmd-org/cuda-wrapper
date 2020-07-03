@@ -58,12 +58,12 @@ public:
     /*
      * returns a message string for either CUDA runtime or CUDA driver error
      */
-    const char *what() const throw()
+    char const* what() const throw()
     {
-        if (runtime)
+        if (runtime) {
             return cudaGetErrorString(static_cast<cudaError_t>(err));
-        else {
-            const char *str;
+        } else {
+            char const* str;
             cuGetErrorString(static_cast<CUresult>(err), &str);
             return str;
         }

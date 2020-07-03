@@ -86,8 +86,9 @@ public:
     void set(int num)
     {
         // return immediately if device is the same as before
-        if (num == num_)
+        if (num == num_) {
             return;
+        }
         // remove old device (if necessary)
         remove();
 
@@ -150,7 +151,7 @@ public:
             return num;
         }
 
-        const static size_t BUFFER_NAME_LENGTH = 100;
+        static const size_t BUFFER_NAME_LENGTH = 100;
         CUdevice dev;
 
     public:

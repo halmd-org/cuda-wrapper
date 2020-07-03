@@ -43,18 +43,18 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
-    typedef const T* const_pointer;
+    typedef T const* const_pointer;
     typedef T& reference;
-    typedef const T& const_reference;
+    typedef T const& const_reference;
     typedef T value_type;
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
     allocator(unsigned int flags = 0) noexcept : _flags(flags) {}
-    allocator(const allocator& alloc) noexcept : _flags(alloc._flags) {}
+    allocator(allocator const& alloc) noexcept : _flags(alloc._flags) {}
 
     template<typename U>
-    allocator(const allocator<U>& alloc) noexcept : _flags(alloc._flags) {}
+    allocator(allocator<U> const& alloc) noexcept : _flags(alloc._flags) {}
 
     ~allocator() {}
 
@@ -65,8 +65,7 @@ public:
     {
         void* p;
 
-        if (__builtin_expect(s > this->max_size(), false))
-        {
+        if (__builtin_expect(s > this->max_size(), false)) {
             throw std::bad_alloc();
         }
 
@@ -77,7 +76,7 @@ public:
 
     void deallocate(pointer p, size_type) noexcept // no-throw guarantee
     {
-        cuMemFreeHost(reinterpret_cast<void *>(p));
+        cuMemFreeHost(reinterpret_cast<void*>(p));
     }
 
     size_type max_size() const noexcept
@@ -85,9 +84,9 @@ public:
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }
 
-    void construct(pointer p, const T& val)
+    void construct(pointer p, T const& val)
     {
-        ::new((void *)p) T(val);
+        ::new((void*) p) T(val);
     }
 
     void destroy(pointer p)
@@ -100,13 +99,13 @@ private:
 };
 
 template<typename T>
-inline bool operator==(const allocator<T>&, const allocator<T>&)
+inline bool operator==(allocator<T> const&, allocator<T> const&)
 {
     return true;
 }
 
 template<typename T>
-inline bool operator!=(const allocator<T>&, const allocator<T>&)
+inline bool operator!=(allocator<T> const&, allocator<T> const&)
 {
     return false;
 }

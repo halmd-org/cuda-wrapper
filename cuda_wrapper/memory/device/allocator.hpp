@@ -42,18 +42,18 @@ struct allocator {
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef T* pointer;
-    typedef const T* const_pointer;
+    typedef T const* const_pointer;
     typedef T& reference;
-    typedef const T& const_reference;
+    typedef T const& const_reference;
     typedef T value_type;
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
     allocator() noexcept {}
-    allocator(const allocator&) noexcept {}
+    allocator(allocator const&) noexcept {}
 
     template <typename U>
-    allocator(const allocator<U>&) noexcept {}
+    allocator(allocator<U> const&) noexcept {}
 
     ~allocator() {}
 
@@ -64,10 +64,12 @@ struct allocator {
     {
         CUdeviceptr p;
 
-        if (s == 0)
+        if (s == 0) {
             return NULL;
-        if (__builtin_expect(s > this->max_size(), false))
+        }
+        if (__builtin_expect(s > this->max_size(), false)) {
             throw std::bad_alloc();
+        }
 
         CU_CALL(cuMemAlloc(&p, s * sizeof(T)));
 
@@ -76,8 +78,9 @@ struct allocator {
 
     void deallocate(pointer p, size_type) noexcept // no-throw guarantee
     {
-        if (p != NULL)
+        if (p != NULL) {
             cuMemFree(reinterpret_cast<CUdeviceptr>(p));
+        }
     }
 
     size_type max_size() const noexcept
@@ -85,9 +88,9 @@ struct allocator {
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }
 
-    void construct(pointer p, const T& val)
+    void construct(pointer p, T const& val)
     {
-        ::new((void *)p) T(val);
+        ::new((void*) p) T(val);
     }
 
     void destroy(pointer p)
@@ -97,13 +100,13 @@ struct allocator {
 };
 
 template<typename T>
-inline bool operator==(const allocator<T>&, const allocator<T>&)
+inline bool operator==(allocator<T> const&, allocator<T> const&)
 {
     return true;
 }
 
 template<typename T>
-inline bool operator!=(const allocator<T>&, const allocator<T>&)
+inline bool operator!=(allocator<T> const&, allocator<T> const&)
 {
     return false;
 }

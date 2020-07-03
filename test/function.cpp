@@ -23,7 +23,7 @@ static const size_t BLOCKS = 4096;
 static const size_t THREADS = 128;
 
 extern cuda::function<void ()> kernel_simple;
-extern cuda::function<void (double const *, double const *, double *)> kernel_add;
+extern cuda::function<void (double const*, double const*, double*)> kernel_add;
 
 BOOST_AUTO_TEST_CASE(simple) {
     cuda::config dim(BLOCKS, THREADS);

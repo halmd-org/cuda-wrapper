@@ -44,8 +44,8 @@ private:
         /**
          * make the class noncopyable by deleting the copy and assignment operator
          */
-        container(const container&) = delete;
-        container& operator=(const container&) = delete;
+        container(container const&) = delete;
+        container& operator=(container const&) = delete;
 
         /**
          * allocate global device memory

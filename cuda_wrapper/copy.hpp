@@ -44,9 +44,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyHtoD(
-        reinterpret_cast<CUdeviceptr>(&*result),
-        &*first,
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , &*first
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     ));
     return result + size;
 }
@@ -72,9 +72,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyDtoH(
-        &*result,
-        reinterpret_cast<CUdeviceptr>(&*first),
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+        &*result
+      , reinterpret_cast<CUdeviceptr>(&*first)
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     ));
     return result + size;
 }
@@ -100,9 +100,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyDtoD(
-        reinterpret_cast<CUdeviceptr>(&*result),
-        reinterpret_cast<CUdeviceptr>(&*first),
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , reinterpret_cast<CUdeviceptr>(&*first)
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     ));
     return result + size;
 }
@@ -128,9 +128,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     std::memcpy(
-        &*result,
-        &*first,
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+        &*result
+      , &*first
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     );
     return result + size;
 }
@@ -156,10 +156,10 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyHtoDAsync(
-        reinterpret_cast<CUdeviceptr>(&*result),
-        &*first,
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
-        stream.data()
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , &*first
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+      , stream.data()
     ));
     return result + size;
 }
@@ -185,10 +185,10 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyDtoHAsync(
-        &*result,
-        reinterpret_cast<CUdeviceptr>(&*first),
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
-        stream.data()
+        &*result
+      , reinterpret_cast<CUdeviceptr>(&*first)
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+      , stream.data()
     ));
     return result + size;
 }
@@ -214,10 +214,10 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     CU_CALL(cuMemcpyDtoDAsync(
-        reinterpret_cast<CUdeviceptr>(&*result),
-        reinterpret_cast<CUdeviceptr>(&*first),
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type),
-        stream.data()
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , reinterpret_cast<CUdeviceptr>(&*first)
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+      , stream.data()
     ));
     return result + size;
 }
@@ -243,9 +243,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     std::memcpy(
-        &*result,
-        &*first,
-        size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+        &*result
+      , &*first
+      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     );
     return result + size;
 }
@@ -263,9 +263,9 @@ inline typename std::enable_if<
 {
     typename std::iterator_traits<OutputIterator>::difference_type size = last - first;
     CU_CALL(cuMemsetD8(
-        reinterpret_cast<CUdeviceptr>(&*first),
-        value,
-        size * sizeof(typename std::iterator_traits<OutputIterator>::value_type)
+        reinterpret_cast<CUdeviceptr>(&*first)
+      , value
+      , size * sizeof(typename std::iterator_traits<OutputIterator>::value_type)
     ));
 }
 
