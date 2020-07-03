@@ -11,7 +11,8 @@
 #include <cuda_runtime.h>
 
 #include <cuda_wrapper/error.hpp>
-#include <cuda_wrapper/vector.hpp>
+#include <cuda_wrapper/memory/device/vector.hpp>
+#include <cuda_wrapper/memory/managed/vector.hpp>
 
 #ifndef CUDA_TEXTURE_HPP
 #define CUDA_TEXTURE_HPP
@@ -34,19 +35,18 @@ private:
         /**
          * create a texture object
          */
-        container(const cuda::vector<T>& vector) : data_(vector.data())
+        container(T const* data, size_t size) : data_(data)
         {
             cudaResourceDesc resource_desc = {};
             resource_desc.resType = cudaResourceTypeLinear;
             resource_desc.res.linear.devPtr = const_cast<T*>(data_);
             resource_desc.res.linear.desc = cudaCreateChannelDesc<T>();
-            resource_desc.res.linear.sizeInBytes = vector.capacity() * sizeof(T);
+            resource_desc.res.linear.sizeInBytes = size * sizeof(T);
 
             cudaTextureDesc texture_desc = {};
             texture_desc.readMode = mode;
 
-            CUDA_CALL(cudaCreateTextureObject(&texture_, &resource_desc,
-                &texture_desc, NULL));
+            CUDA_CALL(cudaCreateTextureObject(&texture_, &resource_desc, &texture_desc, NULL));
         }
 
         /**
@@ -65,7 +65,8 @@ private:
     std::shared_ptr<container> texture_;
 
 public:
-    texture(const cuda::vector<T>& vector) : texture_(new container(vector)) {}
+    texture(memory::device::vector<T> const& vector) : texture_(new container(vector.data(), vector.capacity())) {}
+    texture(memory::managed::vector<T> const& vector) : texture_(new container(vector.data(), vector.capacity())) {}
 
     inline operator cudaTextureObject_t() const
     {
