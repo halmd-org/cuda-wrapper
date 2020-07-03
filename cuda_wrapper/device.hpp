@@ -47,7 +47,7 @@ public:
         CU_CALL(cuInit(0));
     }
 
-    ~device() throw() // no-throw guarantee
+    ~device()
     {
         // just like remove, but non-throwing
         if (num_ >= 0) {

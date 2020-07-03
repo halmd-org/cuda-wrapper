@@ -50,13 +50,13 @@ public:
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator(unsigned int flags = 0) throw() : _flags(flags) {}
-    allocator(const allocator& alloc) throw() : _flags(alloc._flags) {}
+    allocator(unsigned int flags = 0) noexcept : _flags(flags) {}
+    allocator(const allocator& alloc) noexcept : _flags(alloc._flags) {}
 
     template<typename U>
-    allocator(const allocator<U>& alloc) throw() : _flags(alloc._flags) {}
+    allocator(const allocator<U>& alloc) noexcept : _flags(alloc._flags) {}
 
-    ~allocator() throw() {}
+    ~allocator() {}
 
     pointer address(reference x) const { return &x; }
     const_pointer address(const_reference x) const { return &x; }
@@ -75,12 +75,12 @@ public:
         return reinterpret_cast<pointer>(p);
     }
 
-    void deallocate(pointer p, size_type) throw() // no-throw guarantee
+    void deallocate(pointer p, size_type) noexcept // no-throw guarantee
     {
         cuMemFreeHost(reinterpret_cast<void *>(p));
     }
 
-    size_type max_size() const throw()
+    size_type max_size() const noexcept
     {
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }

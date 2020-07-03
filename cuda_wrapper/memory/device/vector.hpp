@@ -58,7 +58,7 @@ private:
         /**
          * free global device memory
          */
-        ~container() throw()
+        ~container()
         {
             device::allocator<value_type>().deallocate(m_ptr, m_size);
         }

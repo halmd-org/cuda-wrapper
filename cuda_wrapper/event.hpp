@@ -46,7 +46,7 @@ private:
         /**
          * destroys the event
          */
-        ~container() throw() // no-throw guarantee
+        ~container()
         {
             cuEventDestroy(m_event);
         }

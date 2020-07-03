@@ -52,7 +52,7 @@ private:
         /**
          * destroy the texture object
          */
-        ~container() throw() // no-throw guarantee
+        ~container()
         {
             cudaDestroyTextureObject(texture_);
         }

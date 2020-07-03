@@ -49,13 +49,13 @@ struct allocator {
 
     template <typename U> struct rebind { typedef allocator<U> other; };
 
-    allocator(unsigned int flags = CU_MEM_ATTACH_GLOBAL) throw() : flags_(flags) {}
-    allocator(const allocator& alloc) throw() : flags_(alloc.flags_) {}
+    allocator(unsigned int flags = CU_MEM_ATTACH_GLOBAL) noexcept : flags_(flags) {}
+    allocator(const allocator& alloc) noexcept : flags_(alloc.flags_) {}
 
     template <typename U>
-    allocator(const allocator<U>& alloc) throw() : flags_(alloc.flags_) {}
+    allocator(const allocator<U>& alloc) noexcept : flags_(alloc.flags_) {}
 
-    ~allocator() throw() {}
+    ~allocator() {}
 
     pointer address(reference x) const { return &x; }
     const_pointer address(const_reference x) const { return &x; }
@@ -74,13 +74,13 @@ struct allocator {
         return reinterpret_cast<pointer>(p);
     }
 
-    void deallocate(pointer p, size_type) throw() // no-throw guarantee
+    void deallocate(pointer p, size_type) noexcept // no-throw guarantee
     {
         if (p != NULL)
             cuMemFree(reinterpret_cast<CUdeviceptr>(p));
     }
 
-    size_type max_size() const throw()
+    size_type max_size() const noexcept
     {
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }

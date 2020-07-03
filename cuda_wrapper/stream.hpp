@@ -46,7 +46,7 @@ private:
         /**
          * destroys the stream
          */
-        ~container() throw() // no-throw guarantee
+        ~container()
         {
             cuStreamDestroy(m_stream);
         }
