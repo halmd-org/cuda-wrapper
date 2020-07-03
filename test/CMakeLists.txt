@@ -76,6 +76,7 @@ endmacro()
 
 create_test(version version.cpp)
 create_test(device device.cpp)
+create_test(iterator iterator.cpp)
 create_test(copy copy.cpp)
 create_gpu_test(function function.cpp function_kernel.cu)
 create_gpu_test(event event.cpp function_kernel.cu)

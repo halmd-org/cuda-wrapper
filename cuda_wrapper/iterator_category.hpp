@@ -37,6 +37,16 @@ struct device_random_access_iterator_tag {};
  */
 struct host_random_access_iterator_tag : std::random_access_iterator_tag {};
 
+/**
+ * Managed memory.
+ *
+ * This category derives from std::random_access_iterator_tag, host_random_access_iterator_tag and
+ * device_random_access_iterator.
+ */
+struct managed_random_access_iterator_tag
+  : host_random_access_iterator_tag
+  , device_random_access_iterator_tag {};
+
 } // namespace cuda
 
 #endif /* CUDA_WRAPPER_ITERATOR_CATEGORY_HPP */

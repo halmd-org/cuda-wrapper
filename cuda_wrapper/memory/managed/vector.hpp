@@ -38,8 +38,8 @@ public:
     typedef typename _Base::value_type value_type;
     typedef typename _Base::pointer pointer;
     typedef typename _Base::const_pointer const_pointer;
-    typedef detail::random_access_iterator<typename _Base::iterator, host_random_access_iterator_tag> iterator;
-    typedef detail::random_access_iterator<typename _Base::const_iterator, host_random_access_iterator_tag> const_iterator;
+    typedef detail::random_access_iterator<typename _Base::iterator, managed_random_access_iterator_tag> iterator;
+    typedef detail::random_access_iterator<typename _Base::const_iterator, managed_random_access_iterator_tag> const_iterator;
 
 public:
     /** creates an empty vector */
