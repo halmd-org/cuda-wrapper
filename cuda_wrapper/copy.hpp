@@ -202,7 +202,7 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , host_random_access_iterator_tag
+      , std::random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
@@ -243,7 +243,7 @@ inline typename std::enable_if<
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , host_random_access_iterator_tag
+      , std::random_access_iterator_tag
     >::value
     && !std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
@@ -313,11 +313,11 @@ template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
     std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , host_random_access_iterator_tag
+      , std::random_access_iterator_tag
     >::value
     && std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , host_random_access_iterator_tag
+      , std::random_access_iterator_tag
     >::value
     && !(std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
