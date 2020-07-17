@@ -334,6 +334,7 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
+    stream.synchronize();
     std::memcpy(
         &*result
       , &*first
@@ -362,6 +363,7 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
+    stream.synchronize();
     std::memcpy(
         &*result
       , &*first
