@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2020 Jaslo Ziska
  * Copyright (C) 2010, 2012 Peter Colberg
  *
  * This file is part of cuda-wrapper.
@@ -9,1074 +10,248 @@
 
 #define BOOST_TEST_MODULE copy
 #include <boost/test/unit_test.hpp>
-
-#include <algorithm>
-#include <boost/iterator/counting_iterator.hpp>
+#include <boost/test/data/monomorphic.hpp>
+#include <boost/test/data/test_case.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <vector>
+
+#include <limits>
+#include <random>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include "test.hpp"
 
-using cuda::memory::device::vector;
-namespace host = cuda::memory::host;
+std::default_random_engine gen;
+std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max() - 42);
 
-BOOST_AUTO_TEST_SUITE( global_device_memory )
+auto dataset = boost::unit_test::data::make<unsigned int>({
+    999, 4321, 10000, 31415, 100000
+});
 
-/**
- * test cuda::copy with non-const iterators
- */
-BOOST_AUTO_TEST_CASE( nonconst_iterator )
-{
-    host::vector<int> h_i(10000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
+// copy from host to host vector (all iteratos that are convertible to std::random_access_iterator)
+#define TEST_HOST_HOST(type_a, type_b)                                                                              \
+    BOOST_DATA_TEST_CASE(nonconst_iterator, dataset, n) {                                                           \
+        type_a<int> a(n);                                                                                           \
+        type_b<int> b(n);                                                                                           \
+                                                                                                                    \
+        std::generate(a.begin(), a.end(), std::bind(dist, std::ref(gen)));                                          \
+        BOOST_CHECK(cuda::copy(a.begin(), a.end(), b.begin()) == b.end());                                          \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+                                                                                                                    \
+        std::transform(a.begin(), a.end(), b.begin(), [](int& a) -> int { return a + 42; });                        \
+        BOOST_CHECK(cuda::copy(b.begin(), b.end(), a.begin()) == a.end());                                          \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+    }                                                                                                               \
+    BOOST_DATA_TEST_CASE(const_iterator, dataset, n) {                                                              \
+        type_a<int> a(n);                                                                                           \
+        type_b<int> b(n);                                                                                           \
+                                                                                                                    \
+        std::generate(a.begin(), a.end(), std::bind(dist, std::ref(gen)));                                          \
+        type_a<int> const& a_const(a);                                                                              \
+        BOOST_CHECK(cuda::copy(a_const.begin(), a_const.end(), b.begin()) == b.end());                              \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+                                                                                                                    \
+        std::transform(a_const.begin(), a_const.end(), b.begin(), [](int const& a) -> int { return a + 42; });      \
+        type_b<int> const& b_const(b);                                                                              \
+        BOOST_CHECK(cuda::copy(b_const.begin(), b_const.end(), a.begin()) == a.end());                              \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+    }                                                                                                               \
+    BOOST_DATA_TEST_CASE(pointer, dataset, n) {                                                                     \
+        type_a<int> a(n);                                                                                           \
+        type_b<int> b(n);                                                                                           \
+                                                                                                                    \
+        std::generate(&*a.begin(), &*a.end(), std::bind(dist, std::ref(gen)));                                      \
+        BOOST_CHECK(cuda::copy(a.begin(), a.end(), &*b.begin()) == &*b.end());                                      \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*a.begin(), &*a.end(), b.begin(), b.end());                                  \
+                                                                                                                    \
+        std::transform(a.begin(), a.end(), &*b.begin(), [](int& a) -> int { return a + 42; });                      \
+        BOOST_CHECK(cuda::copy(&*b.begin(), &*b.end(), &*a.begin()) == &*a.end());                                  \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*a.begin(), &*a.end(), &*b.begin(), &*b.end());                              \
+    }                                                                                                               \
+    BOOST_DATA_TEST_CASE(const_pointer, dataset, n) {                                                               \
+        type_a<int> a(n);                                                                                           \
+        type_b<int> b(n);                                                                                           \
+                                                                                                                    \
+        std::generate(&*a.begin(), &*a.end(), std::bind(dist, std::ref(gen)));                                      \
+        type_a<int> const& a_const(a);                                                                              \
+        BOOST_CHECK(cuda::copy(a_const.begin(), a_const.end(), &*b.begin()) == &*b.end());                          \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*a.begin(), &*a.end(), b.begin(), b.end());                                  \
+                                                                                                                    \
+        std::transform(a_const.begin(), a_const.end(), &*b.begin(), [](int const& a) -> int { return a + 42; });    \
+        type_b<int> const& b_const(b);                                                                              \
+        BOOST_CHECK(cuda::copy(&*b_const.begin(), &*b_const.end(), &*a.begin()) == &*a.end());                      \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*a.begin(), &*a.end(), &*b.begin(), &*b.end());                              \
+    }                                                                                                               \
+    BOOST_DATA_TEST_CASE(asynchronous, dataset, n) {                                                                \
+        cuda::stream stream;                                                                                        \
+        type_a<int> a(n);                                                                                           \
+        type_b<int> b(n);                                                                                           \
+                                                                                                                    \
+        std::generate(a.begin(), a.end(), std::bind(dist, std::ref(gen)));                                          \
+        BOOST_CHECK(cuda::copy(a.begin(), a.end(), b.begin(), stream) == b.end());                                  \
+        stream.synchronize();                                                                                       \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+                                                                                                                    \
+        std::transform(a.begin(), a.end(), b.begin(), [](int& a) -> int { return a + 42; });                        \
+        BOOST_CHECK(cuda::copy(b.begin(), b.end(), a.begin(), stream) == a.end());                                  \
+        stream.synchronize();                                                                                       \
+        BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
+    }
 
-    host::vector<int> h_j(10000);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
+// copy from host to device vector and back
+#define TEST_DEVICE_HOST(type)                                                                      \
+    BOOST_DATA_TEST_CASE(nonconst_iterator, dataset, n) {                                           \
+        cuda::memory::device::vector<int> d(n);                                                     \
+        type<int> h_a(n);                                                                           \
+        type<int> h_b(n);                                                                           \
+                                                                                                    \
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
+        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d.begin()) == d.end());                      \
+        BOOST_CHECK(cuda::copy(d.begin(), d.end(), h_b.begin()) == h_b.end());                      \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());              \
+    }                                                                                               \
+    BOOST_DATA_TEST_CASE(const_iterator, dataset, n) {                                              \
+        cuda::memory::device::vector<int> d(n);                                                     \
+        type<int> h_a(n);                                                                           \
+        type<int> h_b(n);                                                                           \
+                                                                                                    \
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
+        type<int> const& h_a_const(h_a);                                                            \
+        BOOST_CHECK(cuda::copy(h_a_const.begin(), h_a_const.end(), d.begin()) == d.end());          \
+                                                                                                    \
+        cuda::memory::device::vector<int> const& d_const(d);                                        \
+        BOOST_CHECK(cuda::copy(d_const.begin(), d_const.end(), h_b.begin()) == h_b.end());          \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());              \
+    }                                                                                               \
+    BOOST_DATA_TEST_CASE(pointer, dataset, n) {                                                     \
+        cuda::memory::device::vector<int> d(n);                                                     \
+        type<int> h_a(n);                                                                           \
+        type<int> h_b(n);                                                                           \
+                                                                                                    \
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
+        BOOST_CHECK(cuda::copy(&*h_a.begin(), &*h_a.end(), d.begin()) == d.end());                  \
+        BOOST_CHECK(cuda::copy(d.begin(), d.end(), &*h_b.begin()) == &*h_b.end());                  \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*h_a.begin(), &*h_a.end(), &*h_b.begin(), &*h_b.end());      \
+    }                                                                                               \
+    BOOST_DATA_TEST_CASE(const_pointer, dataset, n) {                                               \
+        cuda::memory::device::vector<int> d(n);                                                     \
+        type<int> h_a(n);                                                                           \
+        type<int> h_b(n);                                                                           \
+                                                                                                    \
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
+        type<int> const& h_a_const(h_a);                                                            \
+        BOOST_CHECK(cuda::copy(&*h_a_const.begin(), &*h_a_const.end(), d.begin()) == d.end());      \
+                                                                                                    \
+        cuda::memory::device::vector<int> const& d_const(d);                                        \
+        BOOST_CHECK(cuda::copy(d_const.begin(), d_const.end(), &*h_b.begin()) == &*h_b.end());      \
+        BOOST_CHECK_EQUAL_COLLECTIONS(&*h_a.begin(), &*h_a.end(), &*h_b.begin(), &*h_b.end());      \
+    }                                                                                               \
+    BOOST_DATA_TEST_CASE(asynchronous, dataset, n) {                                                \
+        cuda::stream stream;                                                                        \
+        cuda::memory::device::vector<int> d(n);                                                     \
+        type<int> h_a(n);                                                                           \
+        type<int> h_b(n);                                                                           \
+                                                                                                    \
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
+        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d.begin(), stream) == d.end());              \
+        stream.synchronize();                                                                       \
+                                                                                                    \
+        BOOST_CHECK(cuda::copy(d.begin(), d.end(), h_b.begin(), stream) == h_b.end());              \
+        stream.synchronize();                                                                       \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());              \
+    }
 
-    std::copy(
-        boost::counting_iterator<int>(42)
-      , boost::counting_iterator<int>(h_i.size() + 42)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , g_j.begin()) == g_j.end()
-    );
-    BOOST_CHECK( cuda::copy(
-        g_j.begin()
-      , g_j.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(42)
-      , boost::counting_iterator<int>(h_i.size() + 42)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
 
-    std::copy(
-        boost::counting_iterator<int>(43)
-      , boost::counting_iterator<int>(h_i.size() + 43)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(43)
-      , boost::counting_iterator<int>(h_i.size() + 43)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
+BOOST_AUTO_TEST_SUITE(host_host)
+    TEST_HOST_HOST(cuda::memory::host::vector, cuda::memory::host::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(managed_managed)
+    TEST_HOST_HOST(cuda::memory::managed::vector, cuda::memory::managed::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(host_managed)
+    TEST_HOST_HOST(cuda::memory::host::vector, cuda::memory::managed::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(std_host)
+    TEST_HOST_HOST(std::vector, cuda::memory::host::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(std_managed)
+    TEST_HOST_HOST(std::vector, cuda::memory::managed::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+
+BOOST_AUTO_TEST_SUITE(device_host)
+    TEST_DEVICE_HOST(cuda::memory::host::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(device_managed)
+    TEST_DEVICE_HOST(cuda::memory::managed::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(device_std)
+    TEST_DEVICE_HOST(std::vector)
+BOOST_AUTO_TEST_SUITE_END()
+
+
+BOOST_AUTO_TEST_SUITE(device_device)
+    BOOST_DATA_TEST_CASE(nonconst_iterator, dataset, n) {
+        cuda::memory::host::vector<int> h_a(n);
+        cuda::memory::host::vector<int> h_b(n);
+        cuda::memory::device::vector<int> d_a(n);
+        cuda::memory::device::vector<int> d_b(n);
+
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));
+        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d_a.begin()) == d_a.end());
+        BOOST_CHECK(cuda::copy(d_a.begin(), d_a.end(), d_b.begin()) == d_b.end());
+        BOOST_CHECK(cuda::copy(d_b.begin(), d_b.end(), h_b.begin()) == h_b.end());
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());
+    }
+    BOOST_DATA_TEST_CASE(const_iterator, dataset, n) {
+        cuda::memory::host::vector<int> h_a(n);
+        cuda::memory::host::vector<int> h_b(n);
+        cuda::memory::device::vector<int> d_a(n);
+        cuda::memory::device::vector<int> d_b(n);
+
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));
+        cuda::memory::host::vector<int> const& h_a_const(h_a);
+        BOOST_CHECK(cuda::copy(h_a_const.begin(), h_a_const.end(), d_a.begin()) == d_a.end());
+
+        cuda::memory::device::vector<int> const& d_a_const(d_a);
+        BOOST_CHECK(cuda::copy(d_a_const.begin(), d_a_const.end(), d_b.begin()) == d_b.end());
+
+        cuda::memory::device::vector<int> const& d_b_const(d_b);
+        BOOST_CHECK(cuda::copy(d_b_const.begin(), d_b_const.end(), h_b.begin()) == h_b.end());
+
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());
+    }
+    BOOST_DATA_TEST_CASE(asynchronous, dataset, n) {
+        cuda::stream stream;
+        cuda::memory::host::vector<int> h_a(n);
+        cuda::memory::host::vector<int> h_b(n);
+        cuda::memory::device::vector<int> d_a(n);
+        cuda::memory::device::vector<int> d_b(n);
+
+        std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));
+        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d_a.begin(), stream) == d_a.end());
+        stream.synchronize();
+        BOOST_CHECK(cuda::copy(d_a.begin(), d_a.end(), d_b.begin(), stream) == d_b.end());
+        stream.synchronize();
+        BOOST_CHECK(cuda::copy(d_b.begin(), d_b.end(), h_b.begin(), stream) == h_b.end());
+        stream.synchronize();
+
+        BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());
+    }
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_DATA_TEST_CASE(memset_iterators, dataset * boost::unit_test::data::make<unsigned char>({0, 0xff, 42}), n, c) {
+    std::vector<unsigned char> v(n, c);
+    cuda::memory::host::vector<unsigned char> h(n);
+    cuda::memory::device::vector<unsigned char> d(n);
+
+    cuda::memset(d.begin(), d.end(), c);
+    BOOST_CHECK(cuda::copy(d.begin(), d.end(), h.begin()) == h.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(v.begin(), v.end(), h.begin(), h.end());
 }
-
-/**
- * test cuda::copy with const iterators
- */
-BOOST_AUTO_TEST_CASE( const_iterator )
-{
-    host::vector<int> h_i(99999);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    host::vector<int> const& h_i_const(h_i);
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    host::vector<int> h_j(99999);
-    vector<int> const& g_i_const(g_i);
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(44)
-      , boost::counting_iterator<int>(h_i.size() + 44)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , g_j.begin()) == g_j.end()
-    );
-    vector<int> const& g_j_const(g_j);
-    BOOST_CHECK( cuda::copy(
-        g_j_const.begin()
-      , g_j_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(44)
-      , boost::counting_iterator<int>(h_i.size() + 44)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(45)
-      , boost::counting_iterator<int>(h_i.size() + 45)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(45)
-      , boost::counting_iterator<int>(h_i.size() + 45)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with std::vector::iterator
- */
-BOOST_AUTO_TEST_CASE( std_vector_iterator )
-{
-    std::vector<int> h_i(999);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    std::vector<int> h_j(999);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(46)
-      , boost::counting_iterator<int>(h_i.size() + 46)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , g_j.begin()) == g_j.end()
-    );
-    BOOST_CHECK( cuda::copy(
-        g_j.begin()
-      , g_j.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(46)
-      , boost::counting_iterator<int>(h_i.size() + 46)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(47)
-      , boost::counting_iterator<int>(h_i.size() + 47)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(47)
-      , boost::counting_iterator<int>(h_i.size() + 47)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with std::vector::const_iterator
- */
-BOOST_AUTO_TEST_CASE( std_vector_const_iterator )
-{
-    std::vector<int> h_i(100000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    std::vector<int> const& h_i_const(h_i);
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    std::vector<int> h_j(100000);
-    vector<int> const& g_i_const(g_i);
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(48)
-      , boost::counting_iterator<int>(h_i.size() + 48)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , g_j.begin()) == g_j.end()
-    );
-    vector<int> const& g_j_const(g_j);
-    BOOST_CHECK( cuda::copy(
-        g_j_const.begin()
-      , g_j_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(48)
-      , boost::counting_iterator<int>(h_i.size() + 48)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(49)
-      , boost::counting_iterator<int>(h_i.size() + 49)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(49)
-      , boost::counting_iterator<int>(h_i.size() + 49)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with boost::numeric::ublas::vector::iterator
- */
-BOOST_AUTO_TEST_CASE( boost_ublas_vector_iterator )
-{
-    boost::numeric::ublas::vector<int> h_i(999);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    boost::numeric::ublas::vector<int> h_j(999);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(111)
-      , boost::counting_iterator<int>(h_i.size() + 111)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , g_j.begin()) == g_j.end()
-    );
-    BOOST_CHECK( cuda::copy(
-        g_j.begin()
-      , g_j.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(111)
-      , boost::counting_iterator<int>(h_i.size() + 111)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(12931)
-      , boost::counting_iterator<int>(h_i.size() + 12931)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(12931)
-      , boost::counting_iterator<int>(h_i.size() + 12931)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with boost::numeric::ublas::vector::const_iterator
- */
-BOOST_AUTO_TEST_CASE( boost_ublas_vector_const_iterator )
-{
-    boost::numeric::ublas::vector<int> h_i(100000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    boost::numeric::ublas::vector<int> const& h_i_const(h_i);
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    boost::numeric::ublas::vector<int> h_j(100000);
-    vector<int> const& g_i_const(g_i);
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(542)
-      , boost::counting_iterator<int>(h_i.size() + 542)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , g_j.begin()) == g_j.end()
-    );
-    vector<int> const& g_j_const(g_j);
-    BOOST_CHECK( cuda::copy(
-        g_j_const.begin()
-      , g_j_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(542)
-      , boost::counting_iterator<int>(h_i.size() + 542)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(783)
-      , boost::counting_iterator<int>(h_i.size() + 783)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(783)
-      , boost::counting_iterator<int>(h_i.size() + 783)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with pointer
- */
-BOOST_AUTO_TEST_CASE( pointer )
-{
-    std::vector<int> h_i(100001);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        &*h_i.begin()
-      , &*h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    std::vector<int> h_j(100001);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(46)
-      , boost::counting_iterator<int>(h_i.size() + 46)
-      , &*h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        &*h_i.begin()
-      , &*h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , g_j.begin()) == g_j.end()
-    );
-    BOOST_CHECK( cuda::copy(
-        g_j.begin()
-      , g_j.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(46)
-      , boost::counting_iterator<int>(h_i.size() + 46)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(47)
-      , boost::counting_iterator<int>(h_i.size() + 47)
-      , &*h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(47)
-      , boost::counting_iterator<int>(h_i.size() + 47)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-}
-
-/**
- * test cuda::copy with const pointer
- */
-BOOST_AUTO_TEST_CASE( const_pointer )
-{
-    std::vector<int> h_i(424242);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , &*h_i.begin()
-    );
-    std::vector<int> const& h_i_const(h_i);
-    BOOST_CHECK( cuda::copy(
-        &*h_i_const.begin()
-      , &*h_i_const.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    std::vector<int> h_j(424242);
-    vector<int> const& g_i_const(g_i);
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(48)
-      , boost::counting_iterator<int>(h_i.size() + 48)
-      , &*h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        &*h_i.begin()
-      , &*h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , g_j.begin()) == g_j.end()
-    );
-    vector<int> const& g_j_const(g_j);
-    BOOST_CHECK( cuda::copy(
-        g_j_const.begin()
-      , g_j_const.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(48)
-      , boost::counting_iterator<int>(h_i.size() + 48)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(49)
-      , boost::counting_iterator<int>(h_i.size() + 49)
-      , &*h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        &*h_i_const.begin()
-      , &*h_i_const.end()
-      , &*h_j.begin()) == &*h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_j.begin()
-      , &*h_j.end()
-      , boost::counting_iterator<int>(49)
-      , boost::counting_iterator<int>(h_i.size() + 49)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        &*h_i.begin()
-      , &*h_i.end()
-      , &*h_j.begin()
-      , &*h_j.end()
-    );
-}
-
-/**
- * test asynchronous cuda::copy
- */
-BOOST_AUTO_TEST_CASE( asynchronous )
-{
-    cuda::stream stream;
-    host::vector<int> h_i(10000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()
-      , stream) == g_i.end()
-    );
-
-    host::vector<int> h_j(10000);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(42)
-      , boost::counting_iterator<int>(h_i.size() + 42)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()
-      , stream) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , g_j.begin()
-      , stream) == g_j.end()
-    );
-    BOOST_CHECK( cuda::copy(
-        g_j.begin()
-      , g_j.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(42)
-      , boost::counting_iterator<int>(h_i.size() + 42)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(43)
-      , boost::counting_iterator<int>(h_i.size() + 43)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(43)
-      , boost::counting_iterator<int>(h_i.size() + 43)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test asynchronous cuda::copy with const iterators
- */
-BOOST_AUTO_TEST_CASE( asynchronous_const_iterators )
-{
-    cuda::stream stream;
-    host::vector<int> h_i(10000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    host::vector<int> const& h_i_const(h_i);
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , g_i.begin()
-      , stream) == g_i.end()
-    );
-
-    host::vector<int> h_j(10000);
-    vector<int> const& g_i_const(g_i);
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(44)
-      , boost::counting_iterator<int>(h_i.size() + 44)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()
-      , stream) == g_i.end()
-    );
-    vector<int> g_j(h_i.size());
-    BOOST_CHECK( cuda::copy(
-        g_i_const.begin()
-      , g_i_const.end()
-      , g_j.begin()
-      , stream) == g_j.end()
-    );
-    vector<int> const& g_j_const(g_j);
-    BOOST_CHECK( cuda::copy(
-        g_j_const.begin()
-      , g_j_const.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(44)
-      , boost::counting_iterator<int>(h_i.size() + 44)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-
-    std::copy(
-        boost::counting_iterator<int>(45)
-      , boost::counting_iterator<int>(h_i.size() + 45)
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i_const.begin()
-      , h_i_const.end()
-      , h_j.begin()
-      , stream) == h_j.end()
-    );
-    stream.synchronize();
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(45)
-      , boost::counting_iterator<int>(h_i.size() + 45)
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_i.begin()
-      , h_i.end()
-      , h_j.begin()
-      , h_j.end()
-    );
-}
-
-/**
- * test cuda::memset
- */
-BOOST_AUTO_TEST_CASE( memset_iterators )
-{
-    host::vector<int> h_i(10000);
-    vector<int> g_i(h_i.size());
-    std::copy(
-        boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-      , h_i.begin()
-    );
-    BOOST_CHECK( cuda::copy(
-        h_i.begin()
-      , h_i.end()
-      , g_i.begin()) == g_i.end()
-    );
-
-    host::vector<int> h_j(10000);
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        h_j.begin()
-      , h_j.end()
-      , boost::counting_iterator<int>(0)
-      , boost::counting_iterator<int>(h_i.size())
-    );
-
-    cuda::memset(
-        g_i.begin()
-      , g_i.end()
-      , 0
-    );
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL( std::count(h_j.begin(), h_j.end(), 0), 10000 );
-
-    cuda::memset(
-        g_i.end() - 9999
-      , g_i.begin() + 9000
-      , 0xff
-    );
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL( h_j.front(), 0 );
-    BOOST_CHECK_EQUAL( std::count(h_j.begin() + 1, h_j.end() - 1000, -1), 8999 );
-    BOOST_CHECK_EQUAL( std::count(h_j.end() - 1000, h_j.end(), 0), 1000 );
-
-    cuda::memset(
-        g_i.begin()
-      , g_i.end()
-      , 1 // assigns *byte* value
-    );
-    BOOST_CHECK( cuda::copy(
-        g_i.begin()
-      , g_i.end()
-      , h_j.begin()) == h_j.end()
-    );
-    BOOST_CHECK_EQUAL( std::count(h_j.begin(), h_j.end(), 1), 0 );
-}
-
-BOOST_AUTO_TEST_SUITE_END() // global_device_memory
