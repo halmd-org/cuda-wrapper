@@ -25,38 +25,36 @@ namespace host {
 
 /**
  * CUDA page-locked host memory vector
+ *
+ * Custom STL like vector class as described in:
+ * https://en.cppreference.com/w/cpp/container/vector
  */
 template <typename T>
-class vector
-  : public std::vector<T, allocator<T> >
+class vector : public std::vector<T, allocator<T>>
 {
 private:
-    typedef allocator<T> _Alloc;
-    typedef std::vector<T, allocator<T> > _Base;
+    typedef std::vector<T, allocator<T>> _Base;
 
 public:
-    typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
+    typedef typename _Base::allocator_type allocator_type;
+    typedef typename _Base::size_type size_type;
+    typedef typename _Base::difference_type difference_type;
+    typedef typename _Base::reference reference;
+    typedef typename _Base::const_reference const_reference;
     typedef typename _Base::pointer pointer;
     typedef typename _Base::const_pointer const_pointer;
     typedef detail::random_access_iterator<typename _Base::iterator, host_random_access_iterator_tag> iterator;
     typedef detail::random_access_iterator<typename _Base::const_iterator, host_random_access_iterator_tag> const_iterator;
-    typedef detail::random_access_iterator<pointer, device_random_access_iterator_tag> device_iterator;
-    typedef detail::random_access_iterator<const_pointer, device_random_access_iterator_tag> const_device_iterator;
 
-public:
-    /** creates an empty vector */
-    vector(_Alloc const& alloc = _Alloc()) : _Base(alloc) {}
-    /** creates a vector with n elements */
-    vector(size_type n, T const& t = T(), _Alloc const& alloc = _Alloc()) : _Base(n, t, alloc) {}
-    /** creates a vector with a copy of a range */
-    template <class InputIterator>
-    vector(InputIterator begin, InputIterator end, _Alloc const& alloc = _Alloc()) : _Base(begin, end, alloc) {}
+    /** use the std::vector constructor and assignment operator */
+    using _Base::_Base;
+    using _Base::operator=;
 
     /**
      * Returns host iterator to the first element of the array.
      */
-    iterator begin()
+    iterator begin() noexcept
     {
         return iterator(_Base::begin());
     }
@@ -64,7 +62,7 @@ public:
     /**
      * Returns host iterator to the first element of the array.
      */
-    const_iterator begin() const
+    const_iterator begin() const noexcept
     {
         return const_iterator(_Base::begin());
     }
@@ -72,7 +70,7 @@ public:
     /**
      * Returns host iterator to the element following the last element of the array.
      */
-    iterator end()
+    iterator end() noexcept
     {
         return iterator(_Base::end());
     }
@@ -80,69 +78,9 @@ public:
     /**
      * Returns host iterator to the element following the last element of the array.
      */
-    const_iterator end() const
+    const_iterator end() const noexcept
     {
         return const_iterator(_Base::end());
-    }
-
-    /**
-     * Returns device iterator to the first element of the array.
-     *
-     * This is needed for backwards-compatibility with devices of compute
-     * capability 1.1 or lower. Devices of compute capability support
-     * unified addressing, i.e. a pointer to page-locked host memory
-     * is usable both on the device and the host.
-     */
-    device_iterator gbegin()
-    {
-        CUdeviceptr p;
-        CU_CALL(cuMemHostGetDevicePointer(&p, &*_Base::begin(), 0));
-        return device_iterator(static_cast<pointer>(p));
-    }
-
-    /**
-     * Returns device iterator to the first element of the array.
-     *
-     * This is needed for backwards-compatibility with devices of compute
-     * capability 1.1 or lower. Devices of compute capability support
-     * unified addressing, i.e. a pointer to page-locked host memory
-     * is usable both on the device and the host.
-     */
-    const_device_iterator gbegin() const
-    {
-        CUdeviceptr p;
-        CU_CALL(cuMemHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0));
-        return const_device_iterator(static_cast<const_pointer>(p));
-    }
-
-    /**
-     * Returns device iterator to the element following the last element of the array.
-     *
-     * This is needed for backwards-compatibility with devices of compute
-     * capability 1.1 or lower. Devices of compute capability support
-     * unified addressing, i.e. a pointer to page-locked host memory
-     * is usable both on the device and the host.
-     */
-    device_iterator gend()
-    {
-        CUdeviceptr p;
-        CU_CALL(cuMemHostGetDevicePointer(&p, &*_Base::begin(), 0));
-        return device_iterator(static_cast<pointer>(p) + _Base::size());
-    }
-
-    /**
-     * Returns device iterator to the element following the last element of the array.
-     *
-     * This is needed for backwards-compatibility with devices of compute
-     * capability 1.1 or lower. Devices of compute capability support
-     * unified addressing, i.e. a pointer to page-locked host memory
-     * is usable both on the device and the host.
-     */
-    const_device_iterator gend() const
-    {
-        CUdeviceptr p;
-        CU_CALL(cuMemHostGetDevicePointer(&p, const_cast<pointer>(&*_Base::begin()), 0));
-        return const_device_iterator(static_cast<const_pointer>(p) + _Base::size());
     }
 };
 

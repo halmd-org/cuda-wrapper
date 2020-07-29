@@ -16,8 +16,6 @@
 
 #include "test.hpp"
 
-//using namespace cuda::memory;
-
 #define TEST_CASE(type, dataset)                                               \
     BOOST_DATA_TEST_CASE(allocate, dataset, n) {                               \
         type v(n);                                                             \
@@ -50,34 +48,51 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
     0, 1, 3, 10, 57, 111, 999, 4321, 10000, 31415, 100000
 });
 
-#define TEST(vector)                                                           \
-    BOOST_AUTO_TEST_SUITE(type_int)                                            \
-        TEST_CASE(vector<int>, dataset)                                        \
-    BOOST_AUTO_TEST_SUITE_END()                                                \
-                                                                               \
-    BOOST_AUTO_TEST_SUITE(type_unsigned_long_long)                             \
-        TEST_CASE(vector<unsigned long long>, dataset)                         \
-    BOOST_AUTO_TEST_SUITE_END()                                                \
-                                                                               \
-    BOOST_AUTO_TEST_SUITE(type_float)                                          \
-        TEST_CASE(vector<float>, dataset)                                      \
-    BOOST_AUTO_TEST_SUITE_END()                                                \
-                                                                               \
-    BOOST_AUTO_TEST_SUITE(type_double)                                         \
-        TEST_CASE(vector<double>, dataset)                                     \
-    BOOST_AUTO_TEST_SUITE_END()                                                \
-                                                                               \
-    BOOST_AUTO_TEST_SUITE(type_struct)                                         \
-        TEST_CASE(vector<x>, dataset)                                          \
-    BOOST_AUTO_TEST_SUITE_END()                                                \
-                                                                               \
-    BOOST_AUTO_TEST_SUITE(type_class)                                          \
-        TEST_CASE(vector<y>, dataset)                                          \
-    BOOST_AUTO_TEST_SUITE_END()
+#define TEST(vector_type)                                                           \
+    BOOST_AUTO_TEST_SUITE(type_int)                                                 \
+    TEST_CASE(vector_type<int>, dataset)                                            \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_SUITE(type_unsigned_long_long)                                  \
+    TEST_CASE(vector_type<unsigned long long>, dataset)                             \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_SUITE(type_float)                                               \
+    TEST_CASE(vector_type<float>, dataset)                                          \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_SUITE(type_double)                                              \
+    TEST_CASE(vector_type<double>, dataset)                                         \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_SUITE(type_struct)                                              \
+    TEST_CASE(vector_type<x>, dataset)                                              \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_SUITE(type_class)                                               \
+    TEST_CASE(vector_type<y>, dataset)                                              \
+    BOOST_AUTO_TEST_SUITE_END()                                                     \
+                                                                                    \
+    BOOST_AUTO_TEST_CASE(constructor_assignemnt) {                                  \
+        vector_type<int> v0{1, 2, 3};                                               \
+        vector_type<int> v1(v0);                                                    \
+        v0 = {4, 5, 6};                                                             \
+        v1 = v0;                                                                    \
+        vector_type<int> v2(v0.begin(), v0.end());                                  \
+                                                                                    \
+        cuda::memory::host::vector<int> h0(3);                                      \
+        cuda::memory::host::vector<int> h1(3);                                      \
+        cuda::memory::host::vector<int> h2(3);                                      \
+        cuda::copy(v0.begin(), v0.end(), h0.begin());                               \
+        cuda::copy(v1.begin(), v1.end(), h1.begin());                               \
+        cuda::copy(v2.begin(), v2.end(), h2.begin());                               \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h0.begin(), h0.end(), h1.begin(), h1.end());  \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h0.begin(), h0.end(), h2.begin(), h2.end());  \
+    }
 
 
 BOOST_AUTO_TEST_SUITE(managed)
-  TEST(cuda::memory::managed::vector)
+    TEST(cuda::memory::managed::vector)
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(device)

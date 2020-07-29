@@ -25,40 +25,46 @@ namespace managed {
 
 /**
  * CUDA managed memory vector
+ *
+ * Custom STL like vector class as described in:
+ * https://en.cppreference.com/w/cpp/container/vector
  */
 template <typename T>
-class vector : public std::vector<T, allocator<T> >
+class vector : public std::vector<T, allocator<T>>
 {
 private:
-    typedef allocator<T> _Alloc;
     typedef std::vector<T, allocator<T>> _Base;
 
 public:
-    typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
+    typedef typename _Base::allocator_type allocator_type;
+    typedef typename _Base::size_type size_type;
+    typedef typename _Base::difference_type difference_type;
+    typedef typename _Base::reference reference;
+    typedef typename _Base::const_reference const_reference;
     typedef typename _Base::pointer pointer;
     typedef typename _Base::const_pointer const_pointer;
     typedef detail::random_access_iterator<typename _Base::iterator, managed_random_access_iterator_tag> iterator;
     typedef detail::random_access_iterator<typename _Base::const_iterator, managed_random_access_iterator_tag> const_iterator;
+    typedef detail::random_access_iterator<pointer, device_random_access_iterator_tag> device_iterator;
+    typedef detail::random_access_iterator<const_pointer, device_random_access_iterator_tag> const_device_iterator;
 
-public:
-    /** creates an empty vector */
-    vector() : _Base() {}
-    /** creates a vector with n elements */
-    vector(size_type n, T const& t = T()) : _Base(n, t) {}
-    /** creates a vector with a copy of a range */
-    template <class InputIterator>
-    vector(InputIterator begin, InputIterator end) : _Base(begin, end) {}
+    /** use the std::vector constructor and assignment operator */
+    using _Base::_Base;
+    using _Base::operator=;
 
     /**
-     * returns device pointer to allocated device memory
+     * Returns device pointer to allocated device memory
      */
-    operator pointer()
+    operator pointer() noexcept
     {
         return _Base::data();
     }
 
-    operator const_pointer() const
+    /**
+     * Returns const device pointer to allocated device memory
+     */
+    operator const_pointer() const noexcept
     {
         return _Base::data();
     }
@@ -66,7 +72,7 @@ public:
     /**
      * Returns host iterator to the first element of the array.
      */
-    iterator begin()
+    iterator begin() noexcept
     {
         return iterator(_Base::begin());
     }
@@ -74,7 +80,7 @@ public:
     /**
      * Returns host iterator to the first element of the array.
      */
-    const_iterator begin() const
+    const_iterator begin() const noexcept
     {
         return const_iterator(_Base::begin());
     }
@@ -82,7 +88,7 @@ public:
     /**
      * Returns host iterator to the element following the last element of the array.
      */
-    iterator end()
+    iterator end() noexcept
     {
         return iterator(_Base::end());
     }
@@ -90,12 +96,30 @@ public:
     /**
      * Returns host iterator to the element following the last element of the array.
      */
-    const_iterator end() const
+    const_iterator end() const noexcept
     {
         return const_iterator(_Base::end());
     }
 
+    device_iterator device_begin() noexcept
+    {
+        return device_iterator(&*_Base::begin());
+    }
 
+    const_device_iterator device_begin() const noexcept
+    {
+        return const_device_iterator(&*_Base::begin());
+    }
+
+    device_iterator device_end() noexcept
+    {
+        return device_iterator(&*_Base::end());
+    }
+
+    const_device_iterator device_end() const noexcept
+    {
+        return const_device_iterator(&*_Base::end());
+    }
 };
 
 } // namespace managed

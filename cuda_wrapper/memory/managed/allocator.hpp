@@ -28,10 +28,10 @@ using std::size_t;
 using std::ptrdiff_t;
 
 /**
- * The implementation of a custom allocator class for the STL is described
- * here and there:
- * http://www.codeproject.com/Articles/4795/C-Standard-Allocator-An-Introduction-and-Implement
- * http://stackoverflow.com/a/11417774
+ * Allocator that wraps cuMemAllocManaged
+ *
+ * The implementation of a custom allocator class for the STL as described
+ * here: https://en.cppreference.com/w/cpp/memory/allocator
  *
  * The same pattern is used in ext/malloc_allocator.h of the GNU Standard C++
  * Library, which wraps "C" malloc.
@@ -56,8 +56,8 @@ struct allocator {
 
     ~allocator() {}
 
-    pointer address(reference x) const { return &x; }
-    const_pointer address(const_reference x) const { return &x; }
+    pointer address(reference x) const noexcept { return &x; }
+    const_pointer address(const_reference x) const noexcept { return &x; }
 
     pointer allocate(size_type s, void const* = 0)
     {
@@ -75,7 +75,7 @@ struct allocator {
         return reinterpret_cast<pointer>(p);
     }
 
-    void deallocate(pointer p, size_type) noexcept // no-throw guarantee
+    void deallocate(pointer p, size_type)
     {
         if (p != NULL) {
             cuMemFree(reinterpret_cast<CUdeviceptr>(p));
@@ -87,28 +87,30 @@ struct allocator {
         return std::numeric_limits<size_t>::max() / sizeof(T);
     }
 
-    void construct(pointer p, T const& val)
+    template<typename U, typename... Args>
+    void construct(U* p, Args&&... args)
     {
-        ::new((void*) p) T(val);
+        ::new((void *)p) U(std::forward<Args>(args)...);
     }
 
-    void destroy(pointer p)
+    template<class U>
+    void destroy(U* p)
     {
-        p->~T();
+        p->~U();
     }
 
 private:
     unsigned int flags_;
 };
 
-template<typename T>
-inline bool operator==(allocator<T> const&, allocator<T> const&)
+template<typename T, typename U>
+inline bool operator==(allocator<T> const&, allocator<U> const&) noexcept
 {
     return true;
 }
 
-template<typename T>
-inline bool operator!=(allocator<T> const&, allocator<T> const&)
+template<typename T, typename U>
+inline bool operator!=(allocator<T> const&, allocator<U> const&) noexcept
 {
     return false;
 }
