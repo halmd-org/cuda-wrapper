@@ -16,8 +16,10 @@
 #include <cuda.h>
 
 #include <cuda_wrapper/detail/random_access_iterator.hpp>
+#include <cuda_wrapper/device.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
 #include <cuda_wrapper/memory/managed/allocator.hpp>
+#include <cuda_wrapper/stream.hpp>
 
 namespace cuda {
 namespace memory {
@@ -52,6 +54,38 @@ public:
     /** use the std::vector constructor and assignment operator */
     using _Base::_Base;
     using _Base::operator=;
+
+    /**
+     * Advise about the usage pattern of the vector
+     */
+    void advise(CUmem_advise advice, ::cuda::device const& device)
+    {
+        CU_CALL(cuMemAdvise(reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), advice, device.data()));
+    }
+    /**
+     * Advise about the usage pattern of the vector, overloaded for usage with CU_DEVICE_CPU
+     */
+    void advise(CUmem_advise advice, CUdevice device)
+    {
+        CU_CALL(cuMemAdvise(reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), advice, device));
+    }
+
+    /**
+     * Prefetch the vector to the specified device
+     */
+    void prefetch_async(::cuda::device const& device, stream const& stream)
+    {
+        CU_CALL(cuMemPrefetchAsync(
+            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), device.data(), stream.data()));
+    }
+    /**
+     * Prefetch the vector to the specified device, overloaded for usage with CU_DEVICE_CPU
+     */
+    void prefetch_async(CUdevice device, stream const& stream)
+    {
+        CU_CALL(cuMemPrefetchAsync(
+            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), device, stream.data()));
+    }
 
     /**
      * Returns device pointer to allocated device memory

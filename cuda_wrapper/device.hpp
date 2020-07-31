@@ -136,6 +136,14 @@ public:
     }
 
     /**
+     * return the raw CUdevice
+     */
+    CUdevice data() const
+    {
+        return dev_;
+    }
+
+    /**
      * CUDA device properties
      */
     class properties
