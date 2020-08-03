@@ -28,7 +28,7 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
     999, 4321, 10000, 31415, 100000
 });
 
-// copy from host to host vector (all iteratos that are convertible to std::random_access_iterator)
+// copy from host to host vector (all iterators that are convertible to std::random_access_iterator)
 #define TEST_HOST_HOST(type_a, type_b)                                                                              \
     BOOST_DATA_TEST_CASE(nonconst_iterator, dataset, n) {                                                           \
         type_a<int> a(n);                                                                                           \

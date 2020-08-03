@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(managed) {
 
     // configure kernel
     kernel_add.configure(dim.grid, dim.block);
-    // launch kernell
+    // launch kernel
     kernel_add(t_a, t_b, v_c);
 
     // calculate the result on the host
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(manual) {
 
     // configure kernel
     kernel_add.configure(dim.grid, dim.block);
-    // launch kernell
+    // launch kernel
     kernel_add(t_a, t_b, d_c);
 
     // calculate the result on the host

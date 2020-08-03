@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(normal) {
     BOOST_CHECK(s1.query() == false);
     BOOST_CHECK(s2.query() == false);
 
-    // wait for asynchonous copy to be finished
+    // wait for asynchronous copy to be finished
     s1.synchronize();
     s2.synchronize();
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(attach)
     cuda::vector<double> d(a.size());
 
     // attach data to stream s1
-    // a is not attached becuase it will be accessed by both streams s1 and s2
+    // a is not attached because it will be accessed by both streams s1 and s2
     s1.attach(b.data());
     s1.attach(c.data());
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(attach)
     kernel_add.configure(dim.grid, dim.block, s1);
     kernel_add2.configure(dim.grid, dim.block, s2);
 
-    // launch kernell (in stream s1)
+    // launch kernel (in stream s1)
     kernel_add(a, b, c);
 
     // stream s1 should now be busy
