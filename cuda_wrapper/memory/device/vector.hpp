@@ -99,17 +99,19 @@ public:
     {
         copy(begin, end, this->begin());
     }
+
     /** copy constructor */
     vector(vector const& other) : m_size(other.m_size), m_mem(new container(m_size))
     {
         copy(other.begin(), other.end(), begin());
     }
+
     /** move constructor */
-    vector(vector&& other) : m_size(other.m_size), m_mem(other.m_mem)
+    vector(vector&& other) noexcept : vector()
     {
-        other.m_size = 0;
-        other.m_mem = nullptr;
+        swap(*this, other);
     }
+
     /** construct vector from initializer list */
     vector(std::initializer_list<T> list) : m_size(list.size()), m_mem(new container(m_size))
     {
@@ -117,14 +119,12 @@ public:
     }
 
     /** copy assignment */
-    vector& operator=(vector const& other)
+    vector& operator=(vector other)
     {
-        m_size = other.m_size;
-        m_mem = other.m_mem;
-
-        copy(other.begin(), other.end(), this->begin());
+        swap(*this, other);
         return *this;
     }
+
     /** move assignment */
     vector& operator=(vector&& other)
     {
@@ -135,6 +135,7 @@ public:
         other.m_mem = nullptr;
         return *this;
     }
+
     /** initializer list assignment */
     vector& operator=(std::initializer_list<T> list)
     {
@@ -208,10 +209,12 @@ public:
     /**
      * swap device memory with vector
      */
-    void swap(vector& v)
+    friend void swap(vector& first, vector& second) noexcept
     {
-        m_mem.swap(v.m_mem);
-        std::swap(m_size, v.m_size);
+        using std::swap;
+
+        swap(first.m_mem, second.m_mem);
+        swap(first.m_size, second.m_size);
     }
 
     /**
