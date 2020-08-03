@@ -118,6 +118,12 @@ public:
         copy(list.begin(), list.end(), this->begin());
     }
 
+    /** destructor */
+    ~vector()
+    {
+        delete m_mem;
+    }
+
     /** copy assignment */
     vector& operator=(vector other)
     {
@@ -128,6 +134,8 @@ public:
     /** move assignment */
     vector& operator=(vector&& other)
     {
+        delete m_mem;
+
         m_size = other.m_size;
         m_mem = other.m_mem;
 
@@ -139,8 +147,10 @@ public:
     /** initializer list assignment */
     vector& operator=(std::initializer_list<T> list)
     {
+        delete m_mem;
+
         m_size = list.size();
-        m_mem = std::shared_ptr<container>(new container(m_size));
+        m_mem = new container(m_size);
 
         copy(list.begin(), list.end(), this->begin());
         return *this;
@@ -201,8 +211,8 @@ public:
     void reserve(size_type size)
     {
         if (size > m_mem->size()) {
-            m_mem.reset();
-            m_mem.reset(new container(size));
+            delete m_mem;
+            m_mem = new container(size);
         }
     }
 
@@ -262,7 +272,7 @@ public:
 
 private:
     size_type m_size;
-    std::shared_ptr<container> m_mem;
+    container* m_mem;
 };
 
 } // namespace device
