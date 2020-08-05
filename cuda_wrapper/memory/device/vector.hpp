@@ -1,7 +1,8 @@
 /* CUDA global device memory vector
  *
- * Copyright (C) 2007 Peter Colberg
  * Copyright (C) 2020 Jaslo Ziska
+ * Copyright (C) 2020 Felix Höfling
+ * Copyright (C) 2007 Peter Colberg
  *
  * This file is part of cuda-wrapper.
  *
@@ -124,23 +125,16 @@ public:
         delete m_mem;
     }
 
-    /** copy assignment */
+    /** copy and move assignment
+     *
+     *  We use the copy-and-swap idiom and ensure that the operations are
+     *  self-safe and that the move assignment doesn't leak resources.
+     */
     vector& operator=(vector other)
     {
-        swap(*this, other);
-        return *this;
-    }
-
-    /** move assignment */
-    vector& operator=(vector&& other)
-    {
-        delete m_mem;
-
-        m_size = other.m_size;
-        m_mem = other.m_mem;
-
-        other.m_size = 0;
-        other.m_mem = nullptr;
+        vector temp;
+        swap(temp, other);             // 'other' is empty now
+        swap(*this, temp);
         return *this;
     }
 

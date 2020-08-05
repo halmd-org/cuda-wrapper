@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2020 Jaslo Ziska
+ * Copyright (C) 2020 Felix Höfling
  *
  * This file is part of cuda-wrapper.
  *
@@ -13,6 +14,7 @@
 #include <boost/test/data/test_case.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <numeric>
 
 #include "test.hpp"
 
@@ -88,8 +90,29 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
         cuda::copy(v2.begin(), v2.end(), h2.begin());                               \
         BOOST_CHECK_EQUAL_COLLECTIONS(h0.begin(), h0.end(), h1.begin(), h1.end());  \
         BOOST_CHECK_EQUAL_COLLECTIONS(h0.begin(), h0.end(), h2.begin(), h2.end());  \
+    }                                                                               \
+                                                                                    \
+    BOOST_AUTO_TEST_CASE(copy_and_move) {                                           \
+        cuda::memory::host::vector<unsigned int> h0((1UL << 12) + 1);               \
+        std::iota(h0.begin(), h0.end(), 1);                                         \
+                                                                                    \
+        vector_type<unsigned int> v0(h0.size());                                    \
+        cuda::copy(h0.begin(), h0.end(), v0.begin());                               \
+                                                                                    \
+        vector_type<unsigned int> v1, v2(42);                                       \
+        v1 = v0;                                                                    \
+        BOOST_CHECK_EQUAL(v0.size(), v1.size());                                    \
+        v1 = v1;                                                                    \
+        BOOST_CHECK_EQUAL(v0.size(), v1.size());                                    \
+                                                                                    \
+        v2 = std::move(v1);                                                         \
+        BOOST_CHECK(v1.empty());                                                    \
+        BOOST_CHECK_EQUAL(v0.size(), v2.size());                                    \
+                                                                                    \
+        cuda::memory::host::vector<unsigned int> h2(v2.size());                     \
+        cuda::copy(v2.begin(), v2.end(), h2.begin());                               \
+        BOOST_CHECK_EQUAL_COLLECTIONS(h0.begin(), h0.end(), h2.begin(), h2.end());  \
     }
-
 
 BOOST_AUTO_TEST_SUITE(managed)
     TEST(cuda::memory::managed::vector)
