@@ -17,9 +17,10 @@
 
 #include <cuda.h>
 
+#include <cuda_wrapper/error.hpp>
 #include <cuda_wrapper/iterator_category.hpp>
 #include <cuda_wrapper/stream.hpp>
-#include <cuda_wrapper/error.hpp>
+#include <cuda_wrapper/thread.hpp>
 
 namespace cuda {
 
@@ -159,6 +160,7 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
+    cuda::thread::synchronize();
     std::memcpy(
         &*result
       , &*first
@@ -187,6 +189,7 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
+    cuda::thread::synchronize();
     std::memcpy(
         &*result
       , &*first
