@@ -189,10 +189,9 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    cuda::thread::synchronize();
-    std::memcpy(
-        &*result
-      , &*first
+    cuMemcpy(
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , reinterpret_cast<CUdeviceptr>(&*first)
       , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
     );
     return result + size;
@@ -366,11 +365,11 @@ inline typename std::enable_if<
   , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    stream.synchronize();
-    std::memcpy(
-        &*result
-      , &*first
+    cuMemcpyAsync(
+        reinterpret_cast<CUdeviceptr>(&*result)
+      , reinterpret_cast<CUdeviceptr>(&*first)
       , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+      , stream.data()
     );
     return result + size;
 }
