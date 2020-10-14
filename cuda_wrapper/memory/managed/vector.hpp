@@ -65,26 +65,43 @@ public:
     /**
      * Advise about the usage pattern of the vector, overloaded for usage with CU_DEVICE_CPU
      */
-    void advise(CUmem_advise advice, CUdevice device)
+    void advise(CUmem_advise advice, ::cuda::device::cpu)
     {
-        CU_CALL(cuMemAdvise(reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), advice, device));
+        CU_CALL(cuMemAdvise(reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), advice, CU_DEVICE_CPU));
     }
 
     /**
      * Prefetch the vector to the specified device
      */
-    void prefetch_async(::cuda::device const& device, stream const& stream)
+    void prefetch_async(::cuda::device const& device) const
+    {
+        CU_CALL(cuMemPrefetchAsync(
+            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), device.data(), 0));
+    }
+    /**
+     * Prefetch the vector to the specified device
+     */
+    void prefetch_async(::cuda::device const& device, stream const& stream) const
     {
         CU_CALL(cuMemPrefetchAsync(
             reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), device.data(), stream.data()));
     }
+
     /**
      * Prefetch the vector to the specified device, overloaded for usage with CU_DEVICE_CPU
      */
-    void prefetch_async(CUdevice device, stream const& stream)
+    void prefetch_async(::cuda::device::cpu) const
     {
         CU_CALL(cuMemPrefetchAsync(
-            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), device, stream.data()));
+            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), CU_DEVICE_CPU, 0));
+    }
+    /**
+     * Prefetch the vector to the specified device, overloaded for usage with CU_DEVICE_CPU
+     */
+    void prefetch_async(::cuda::device::cpu, stream const& stream) const
+    {
+        CU_CALL(cuMemPrefetchAsync(
+            reinterpret_cast<CUdeviceptr>(_Base::data()), _Base::capacity(), CU_DEVICE_CPU, stream.data()));
     }
 
     /**

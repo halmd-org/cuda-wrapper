@@ -143,6 +143,8 @@ public:
         return dev_;
     }
 
+    enum cpu { CPU };
+
     /**
      * CUDA device properties
      */
@@ -155,20 +157,20 @@ public:
         int get_attribute(CUdevice_attribute attr) const
         {
             int num;
-            CU_CALL(cuDeviceGetAttribute(&num, attr, dev));
+            CU_CALL(cuDeviceGetAttribute(&num, attr, dev_));
             return num;
         }
 
         static const size_t BUFFER_NAME_LENGTH = 100;
-        CUdevice dev;
+        CUdevice dev_;
 
     public:
         /**
          * retrieve properties of given device
          */
-        properties(int ordinal)
+        properties(device const& device)
         {
-            CU_CALL(cuDeviceGet(&dev, ordinal));
+            dev_ = device.data();
         }
 
         /**
@@ -177,7 +179,7 @@ public:
         std::string name() const
         {
             char name[BUFFER_NAME_LENGTH];
-            CU_CALL(cuDeviceGetName(name, BUFFER_NAME_LENGTH, dev));
+            CU_CALL(cuDeviceGetName(name, BUFFER_NAME_LENGTH, dev_));
             return name;
         }
 
@@ -187,7 +189,7 @@ public:
         size_t total_global_mem() const
         {
             size_t num;
-            CU_CALL(cuDeviceTotalMem(&num, dev));
+            CU_CALL(cuDeviceTotalMem(&num, dev_));
             return num;
         }
 

@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(device)
     dev.set(TEST_DEVICE);
     BOOST_CHECK(dev.get() == 0);
 
-    cuda::device::properties prop(dev.get());
+    cuda::device::properties prop(dev);
 
     BOOST_TEST_MESSAGE("device name: " << prop.name());
     BOOST_TEST_MESSAGE("total global mem: " << prop.total_global_mem());
