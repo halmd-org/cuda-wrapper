@@ -68,13 +68,13 @@ BOOST_AUTO_TEST_CASE(normal) {
     // copy data from host to device
     // both vectors are copied asynchronously in two different streams
     // copy the first vector in stream s1
-    cuda::copy(h_a.begin(), h_a.end(), d_a.begin(), s1);
+    cuda::copy_async(h_a.begin(), h_a.end(), d_a.begin(), s1);
 
     // stream s1 should now be busy
     BOOST_CHECK(s1.query() == false);
 
     // copy the second vector in stream s2
-    cuda::copy(h_b.begin(), h_b.end(), d_b.begin(), s2);
+    cuda::copy_async(h_b.begin(), h_b.end(), d_b.begin(), s2);
 
     // both streams should be busy
     BOOST_CHECK(s1.query() == false);
@@ -118,13 +118,13 @@ BOOST_AUTO_TEST_CASE(normal) {
     BOOST_CHECK(s2.query() == true);
 
     // copy back result from device to host in stream s1
-    cuda::copy(d_c.begin(), d_c.end(), h_c.begin(), s1);
+    cuda::copy_async(d_c.begin(), d_c.end(), h_c.begin(), s1);
 
     // stream s1 should now be busy
     BOOST_CHECK(s1.query() == false);
 
     // copy back result from device to host in stream s2
-    cuda::copy(d_d.begin(), d_d.end(), h_d.begin(), s2);
+    cuda::copy_async(d_d.begin(), d_d.end(), h_d.begin(), s2);
 
     // both streams should now be busy
     BOOST_CHECK(s1.query() == false);

@@ -25,163 +25,26 @@
 namespace cuda {
 
 /**
- * Copy from host memory area to device memory area.
+ * Copy from host or device to host or device.
  */
 template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
-    std::is_convertible<
+    (std::is_convertible<
+        typename std::iterator_traits<InputIterator>::iterator_category
+      , device_random_access_iterator_tag
+    >::value
+    || std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyHtoD(
-        reinterpret_cast<CUdeviceptr>(&*result)
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-    ));
-    return result + size;
-}
-
-/**
- * Copy from device memory area to host memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , std::random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyDtoH(
-        &*result
-      , reinterpret_cast<CUdeviceptr>(&*first)
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-    ));
-    return result + size;
-}
-
-/**
- * Copy from device memory area to device memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && !(std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
     >::value)
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
+    && (std::is_convertible<
+        typename std::iterator_traits<OutputIterator>::iterator_category
+      , device_random_access_iterator_tag
     >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyDtoD(
-        reinterpret_cast<CUdeviceptr>(&*result)
-      , reinterpret_cast<CUdeviceptr>(&*first)
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-    ));
-    return result + size;
-}
-
-/**
- * Copy from host memory area to host memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , std::random_access_iterator_tag
-    >::value
-    && std::is_convertible<
+    || std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && !(std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
     >::value)
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    cuda::thread::synchronize();
-    std::memcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-    );
-    return result + size;
-}
-
-/**
- * Copy from managed memory area to managed memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
       , typename std::iterator_traits<OutputIterator>::value_type
@@ -198,171 +61,68 @@ inline typename std::enable_if<
 }
 
 /**
- * Asynchronous copy from host memory area to device memory area.
+ * Asynchronous copy from host or device to host or device.
  */
 template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
-    std::is_convertible<
+    (std::is_convertible<
+        typename std::iterator_traits<InputIterator>::iterator_category
+      , device_random_access_iterator_tag
+    >::value
+    || std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && std::is_convertible<
+    >::value)
+    && (std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , device_random_access_iterator_tag
     >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyHtoDAsync(
-        reinterpret_cast<CUdeviceptr>(&*result)
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , stream.data()
-    ));
-    return result + size;
-}
-
-/**
- * Asynchronous copy from device memory area to host memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
+    || std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
       , std::random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyDtoHAsync(
-        &*result
-      , reinterpret_cast<CUdeviceptr>(&*first)
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , stream.data()
-    ));
-    return result + size;
-}
-
-/**
- * Asynchronous copy from device memory area to device memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , device_random_access_iterator_tag
-    >::value
-    && !(std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
     >::value)
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
       , typename std::iterator_traits<OutputIterator>::value_type
     >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
+  , OutputIterator>::type copy_async(InputIterator first, InputIterator last, OutputIterator result)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    CU_CALL(cuMemcpyDtoDAsync(
+    cuMemcpyAsync(
         reinterpret_cast<CUdeviceptr>(&*result)
       , reinterpret_cast<CUdeviceptr>(&*first)
       , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
-      , stream.data()
-    ));
-    return result + size;
-}
-
-/**
- * Asynchronous copy from host memory area to host memory area.
- */
-template <typename InputIterator, typename OutputIterator>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , std::random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , std::random_access_iterator_tag
-    >::value
-    && !(std::is_convertible<
-        typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value
-    && std::is_convertible<
-        typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
-    >::value)
-    && std::is_same<
-        typename std::iterator_traits<InputIterator>::value_type
-      , typename std::iterator_traits<OutputIterator>::value_type
-    >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
-{
-    typename std::iterator_traits<InputIterator>::difference_type size = last - first;
-    stream.synchronize();
-    std::memcpy(
-        &*result
-      , &*first
-      , size * sizeof(typename std::iterator_traits<InputIterator>::value_type)
+      , 0
     );
     return result + size;
 }
 
 /**
- * Asynchronous copy from managed memory area to managed memory area.
+ * Asynchronous copy from host or device to host or device in dedicated stream.
  */
 template <typename InputIterator, typename OutputIterator>
 inline typename std::enable_if<
-    std::is_convertible<
+    (std::is_convertible<
         typename std::iterator_traits<InputIterator>::iterator_category
-      , managed_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
-    && std::is_convertible<
+    || std::is_convertible<
+        typename std::iterator_traits<InputIterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value)
+    && (std::is_convertible<
         typename std::iterator_traits<OutputIterator>::iterator_category
-      , managed_random_access_iterator_tag
+      , device_random_access_iterator_tag
     >::value
+    || std::is_convertible<
+        typename std::iterator_traits<OutputIterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value)
     && std::is_same<
         typename std::iterator_traits<InputIterator>::value_type
       , typename std::iterator_traits<OutputIterator>::value_type
     >::value
-  , OutputIterator>::type copy(InputIterator first, InputIterator last, OutputIterator result, stream& stream)
+  , OutputIterator>::type copy_async(InputIterator first, InputIterator last, OutputIterator result, stream const& stream)
 {
     typename std::iterator_traits<InputIterator>::difference_type size = last - first;
     cuMemcpyAsync(

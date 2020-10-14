@@ -88,12 +88,12 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
         type_b<int> b(n);                                                                                           \
                                                                                                                     \
         std::generate(a.begin(), a.end(), std::bind(dist, std::ref(gen)));                                          \
-        BOOST_CHECK(cuda::copy(a.begin(), a.end(), b.begin(), stream) == b.end());                                  \
+        BOOST_CHECK(cuda::copy_async(a.begin(), a.end(), b.begin(), stream) == b.end());                            \
         stream.synchronize();                                                                                       \
         BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
                                                                                                                     \
         std::transform(a.begin(), a.end(), b.begin(), [](int& a) -> int { return a + 42; });                        \
-        BOOST_CHECK(cuda::copy(b.begin(), b.end(), a.begin(), stream) == a.end());                                  \
+        BOOST_CHECK(cuda::copy_async(b.begin(), b.end(), a.begin(), stream) == a.end());                            \
         stream.synchronize();                                                                                       \
         BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end());                                      \
     }
@@ -153,17 +153,17 @@ auto dataset = boost::unit_test::data::make<unsigned int>({
         type<int> h_b(n);                                                                           \
                                                                                                     \
         std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));                      \
-        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d.begin(), stream) == d.end());              \
+        BOOST_CHECK(cuda::copy_async(h_a.begin(), h_a.end(), d.begin(), stream) == d.end());        \
         stream.synchronize();                                                                       \
                                                                                                     \
-        BOOST_CHECK(cuda::copy(d.begin(), d.end(), h_b.begin(), stream) == h_b.end());              \
+        BOOST_CHECK(cuda::copy_async(d.begin(), d.end(), h_b.begin(), stream) == h_b.end());        \
         stream.synchronize();                                                                       \
         BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());              \
     }
 
 
 BOOST_AUTO_TEST_SUITE(host_host)
-    TEST_HOST_HOST(cuda::memory::host::vector, cuda::memory::host::vector)
+TEST_HOST_HOST(cuda::memory::host::vector, cuda::memory::host::vector)
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(managed_managed)
@@ -235,11 +235,11 @@ BOOST_AUTO_TEST_SUITE(device_device)
         cuda::memory::device::vector<int> d_b(n);
 
         std::generate(h_a.begin(), h_a.end(), std::bind(dist, std::ref(gen)));
-        BOOST_CHECK(cuda::copy(h_a.begin(), h_a.end(), d_a.begin(), stream) == d_a.end());
+        BOOST_CHECK(cuda::copy_async(h_a.begin(), h_a.end(), d_a.begin(), stream) == d_a.end());
         stream.synchronize();
-        BOOST_CHECK(cuda::copy(d_a.begin(), d_a.end(), d_b.begin(), stream) == d_b.end());
+        BOOST_CHECK(cuda::copy_async(d_a.begin(), d_a.end(), d_b.begin(), stream) == d_b.end());
         stream.synchronize();
-        BOOST_CHECK(cuda::copy(d_b.begin(), d_b.end(), h_b.begin(), stream) == h_b.end());
+        BOOST_CHECK(cuda::copy_async(d_b.begin(), d_b.end(), h_b.begin(), stream) == h_b.end());
         stream.synchronize();
 
         BOOST_CHECK_EQUAL_COLLECTIONS(h_a.begin(), h_a.end(), h_b.begin(), h_b.end());
