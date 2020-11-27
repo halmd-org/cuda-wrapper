@@ -301,6 +301,7 @@ public:
         return const_iterator(*mem_ + size_);
     }
 
+#if CUDA_VERSION >= 8000
     /**
      * Advise about the usage pattern of the vector
      */
@@ -346,6 +347,7 @@ public:
     {
         CU_CALL(cuMemPrefetchAsync(reinterpret_cast<CUdeviceptr>(data()), size_, CU_DEVICE_CPU, stream.data()));
     }
+#endif
 };
 
 } // namespace managed
