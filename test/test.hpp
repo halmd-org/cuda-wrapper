@@ -27,7 +27,7 @@ struct Fixture
     cuda::device dev;
 };
 
-# if BOOST_VERSION < 105900
+# if BOOST_VERSION < 106500
 BOOST_GLOBAL_FIXTURE(Fixture);
 # else
 BOOST_TEST_GLOBAL_CONFIGURATION(Fixture);
