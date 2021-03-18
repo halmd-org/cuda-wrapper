@@ -22,13 +22,11 @@
 static const size_t BLOCKS = 4096;
 static const size_t THREADS = 128;
 
-// from function_kernel.cu test
 extern cuda::function<void (double const*, double const*, double*)> kernel_add;
 
 /*
- * These tests uses the kernel_add and kernel_sqrt from the function test.
  * Both vectors with input numbers and the results are copied asynchronously.
- * In addition the kernel_add and kernel_sqrt are both launched asynchronously.
+ * In addition both kernels are launched asynchronously.
  */
 
 BOOST_AUTO_TEST_CASE(normal) {
