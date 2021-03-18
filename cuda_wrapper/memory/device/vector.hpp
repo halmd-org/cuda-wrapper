@@ -98,13 +98,13 @@ public:
     template <class InputIterator>
     vector(InputIterator begin, InputIterator end) : m_size(end - begin), m_mem(new container(m_size))
     {
-        copy(begin, end, this->begin());
+        ::cuda::copy(begin, end, this->begin());
     }
 
     /** copy constructor */
     vector(vector const& other) : m_size(other.m_size), m_mem(new container(m_size))
     {
-        copy(other.begin(), other.end(), begin());
+        ::cuda::copy(other.begin(), other.end(), begin());
     }
 
     /** move constructor */
