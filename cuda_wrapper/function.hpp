@@ -205,7 +205,7 @@ public:
     }
 
     /**
-     * grid size that archieves maximum occupancy
+     * grid size that achieves maximum occupancy
      */
     int min_grid_size()
     {
@@ -216,7 +216,7 @@ public:
     }
 
     /**
-     * block size that archieves maximum occupancy
+     * block size that achieves maximum occupancy
      */
     int max_block_size()
     {
