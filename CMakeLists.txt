@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.8)
 
 # set cmake policies to avoid warnings in newer cmake versions.
 if(POLICY CMP0053)
@@ -11,7 +11,7 @@ if(POLICY CMP0058)
   cmake_policy(SET CMP0058 NEW)
 endif()
 
-project(cuda-wrapper CXX)
+project(cuda-wrapper NONE)
 
 include(GNUInstallDirs)
 install(DIRECTORY cuda_wrapper DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

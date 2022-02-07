@@ -4,11 +4,9 @@ set(TEST_DEVICE 0 CACHE STRING "The device used for the tests")
 set(TEST_CUDA_MEMCHECK ON CACHE BOOL
   "Set to OFF to disable CUDA memory checks while running the tests.")
 
-# FindCUDA uses the static cuda runtime by default, we need to set this variable
-# before find_package is called
-set(CUDA_USE_STATIC_CUDA_RUNTIME OFF CACHE BOOL
-  "Use the static version of the CUDA runtime library if available")
-find_package(CUDA REQUIRED COMPONENTS cuda cudart)
+enable_language(CUDA)
+find_library(CUDA_LIBRARY cuda HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+find_library(CUDART_LIBRARY cudart HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 
 if(TEST_CUDA_MEMCHECK)
   find_program(CUDA_MEMCHECK cuda-memcheck)
@@ -24,37 +22,23 @@ else()
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-set(CUDA_NVCC_FLAGS "-std=c++11 -Xcompiler -fPIC")
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -fPIC")
-
-# create a test that only runs on the host
-# usage: create_test(NAME FILES...)
-macro(create_test NAME)
-  add_executable(test_cuda_wrapper_${NAME} ${ARGN})
-  target_compile_definitions(test_cuda_wrapper_${NAME}
-    PRIVATE TEST_DEVICE=${TEST_DEVICE}
-    PRIVATE BOOST_TEST_DYN_LINK
-  )
-  target_link_libraries(test_cuda_wrapper_${NAME}
-    ${CUDA_CUDA_LIBRARY}
-    ${CUDA_LIBRARIES}
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-  )
-  add_test(cuda-wrapper/${NAME}
-    test_cuda_wrapper_${NAME} --log_level=test_suite
-  )
-endmacro()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "-Wall")
 
 # create a test that runs on the host and device
 # usage: create_gpu_test(NAME [NO_MEMCHECK] FILES...)
-macro(create_gpu_test NAME NM_OR_FILE)
+macro(create_test NAME NM_OR_FILE)
   if ("${NM_OR_FILE}" STREQUAL "NO_MEMCHECK")
-    cuda_add_executable(test_cuda_wrapper_${NAME} ${ARGN})
+    add_executable(test_cuda_wrapper_${NAME} ${ARGN})
   else()
-    cuda_add_executable(test_cuda_wrapper_${NAME} ${NM_OR_FILE} ${ARGN})
+    add_executable(test_cuda_wrapper_${NAME} ${NM_OR_FILE} ${ARGN})
   endif()
 
   target_compile_definitions(test_cuda_wrapper_${NAME}
@@ -62,7 +46,8 @@ macro(create_gpu_test NAME NM_OR_FILE)
     PRIVATE BOOST_TEST_DYN_LINK
   )
   target_link_libraries(test_cuda_wrapper_${NAME}
-    ${CUDA_CUDA_LIBRARY}
+    ${CUDA_LIBRARY}
+    ${CUDART_LIBRARY}
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
   )
   if ("${NM_OR_FILE}" STREQUAL "NO_MEMCHECK")
@@ -74,18 +59,18 @@ macro(create_gpu_test NAME NM_OR_FILE)
   endif()
 endmacro()
 
-create_test(version version.cpp)
-create_test(device device.cpp)
-create_test(iterator iterator.cpp)
-create_gpu_test(function function.cpp function_kernel.cu)
-create_gpu_test(event event.cpp event_kernel.cu)
-create_gpu_test(texture texture.cpp texture_kernel.cu)
+create_test(version NO_MEMCHECK version.cpp)
+create_test(device NO_MEMCHECK device.cpp)
+create_test(iterator NO_MEMCHECK iterator.cpp)
+create_test(function function.cpp function_kernel.cu)
+create_test(event event.cpp event_kernel.cu)
+create_test(texture texture.cpp texture_kernel.cu)
 # this test somehow doesn't work with cuda-memcheck
-create_gpu_test(stream NO_MEMCHECK stream.cpp stream_kernel.cu)
+create_test(stream NO_MEMCHECK stream.cpp stream_kernel.cu)
 
 # tests which use data driven test cases don't work with Boost < 1.59.0
 if(NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
-  create_test(allocator allocator.cpp)
-  create_test(vector vector.cpp)
-  create_test(copy copy.cpp)
+  create_test(allocator NO_MEMCHECK allocator.cpp)
+  create_test(vector NO_MEMCHECK vector.cpp)
+  create_test(copy NO_MEMCHECK copy.cpp)
 endif()
