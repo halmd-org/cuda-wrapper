@@ -28,9 +28,10 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CUDA_STANDARD 11)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_ARCHITECTURES OFF)
+set(CMAKE_CXX_FLAGS "-Wall -pedantic")
 
 # create a test that runs on the host and device
 # usage: create_gpu_test(NAME [NO_MEMCHECK] FILES...)
