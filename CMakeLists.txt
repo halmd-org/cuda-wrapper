@@ -16,7 +16,7 @@ project(cuda-wrapper NONE)
 include(GNUInstallDirs)
 install(DIRECTORY cuda_wrapper DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-find_package(Boost 1.55.0 COMPONENTS unit_test_framework)
+find_package(Boost 1.59.0 COMPONENTS unit_test_framework)
 if(NOT Boost_FOUND)
   message(WARNING "Boost was not found, unit tests are disabled")
 else()

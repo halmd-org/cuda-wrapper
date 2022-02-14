@@ -63,15 +63,11 @@ endmacro()
 create_test(version NO_MEMCHECK version.cpp)
 create_test(device NO_MEMCHECK device.cpp)
 create_test(iterator NO_MEMCHECK iterator.cpp)
+create_test(allocator NO_MEMCHECK allocator.cpp)
+create_test(vector NO_MEMCHECK vector.cpp)
+create_test(copy NO_MEMCHECK copy.cpp)
 create_test(function function.cpp function_kernel.cu)
 create_test(event event.cpp event_kernel.cu)
 create_test(texture texture.cpp texture_kernel.cu)
 # this test somehow doesn't work with cuda-memcheck
 create_test(stream NO_MEMCHECK stream.cpp stream_kernel.cu)
-
-# tests which use data driven test cases don't work with Boost < 1.59.0
-if(NOT ${Boost_VERSION} VERSION_LESS 1.59.0)
-  create_test(allocator NO_MEMCHECK allocator.cpp)
-  create_test(vector NO_MEMCHECK vector.cpp)
-  create_test(copy NO_MEMCHECK copy.cpp)
-endif()
