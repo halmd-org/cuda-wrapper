@@ -11,7 +11,7 @@ if(POLICY CMP0058)
   cmake_policy(SET CMP0058 NEW)
 endif()
 
-project(cuda-wrapper NONE)
+project(cuda-wrapper CXX)
 
 include(GNUInstallDirs)
 install(DIRECTORY cuda_wrapper DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
