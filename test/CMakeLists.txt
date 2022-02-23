@@ -1,6 +1,6 @@
 set(Boost_VERSION ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
 
-set(TEST_DEVICE 0 CACHE STRING "The device used for the tests")
+set(TEST_DEVICE 0 CACHE STRING "The CUDA device used for the tests")
 set(TEST_CUDA_MEMCHECK ON CACHE BOOL
   "Set to OFF to disable CUDA memory checks while running the tests.")
 
