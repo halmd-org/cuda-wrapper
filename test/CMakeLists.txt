@@ -8,6 +8,12 @@ enable_language(CUDA)
 find_library(CUDA_LIBRARY cuda HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 find_library(CUDART_LIBRARY cudart HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 
+# unset CUDA implicit libraries so they don't overwrite the C++ libraries
+unset(CMAKE_CUDA_IMPLICIT_LINK_LIBRARIES)
+unset(CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES)
+# we manually choose between cudart static/dynamic
+set(CMAKE_CUDA_RUNTIME_LIBRARY None)
+
 if(TEST_CUDA_MEMCHECK)
   find_program(CUDA_MEMCHECK cuda-memcheck)
   if(CUDA_MEMCHECK)
