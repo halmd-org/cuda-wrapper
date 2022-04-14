@@ -1,11 +1,19 @@
-#include "kernel.hpp"
-#include <stdio.h>
-#include <iterator>
+/* examples/first/kernel.cu
+ *
+ * Copyright (C) 2022 Viktor Skoblin
+ *
+ * This file is part of cuda-wrapper.
+ *
+ * This software may be modified and distributed under the terms of the
+ * 3-clause BSD license.  See accompanying file LICENSE for details.
+ */
 
-__global__ void printid(int* vector)
+#include "kernel.hpp"
+
+__global__ void get_id(unsigned int* vector)
 {
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    vector[x] = x;
+    unsigned int i = static_cast<unsigned int>(threadIdx.x + blockIdx.x * blockDim.x);
+    vector[i] = i;
 }
 
-wrapper wrapper::kernel = {printid};
+wrapper wrapper::kernel = { ::get_id };

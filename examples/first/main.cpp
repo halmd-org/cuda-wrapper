@@ -1,23 +1,47 @@
+/* examples/first/main.cpp
+ *
+ * Copyright (C) 2022 Viktor Skoblin
+ * Copyright (C) 2022 Felix Höfling
+ *
+ * This file is part of cuda-wrapper.
+ *
+ * This software may be modified and distributed under the terms of the
+ * 3-clause BSD license.  See accompanying file LICENSE for details.
+ */
+
 #include "kernel.hpp"
+
 #include <iostream>
-#include <vector>
+
+/**
+ * This is a minimal example to demonstate the basic usage of cuda_wrapper.
+ */
 
 int main()
 {
+    // create CUDA context on device 0
     cuda::device dev;
     dev.set(0);
-    cuda::memory::managed::vector<int> array(10);
-    //cuda::thread::synchronize();
-    //size_t size = 128 * sizeof(int);
-    //int* array;
-    //cudaMallocManaged(&array, size);
-    cuda::config dim(64, 128);
-    wrapper::kernel.func.configure(dim.grid, dim.block);
-    wrapper::kernel.func(array);
+
+    // allocate managed memory
+    cuda::config dim(30, 128);
+    cuda::memory::managed::vector<unsigned int> array(dim.threads());
+
+    // call a CUDA kernel from a different compilation unit
+    wrapper::kernel.get_id.configure(dim.grid, dim.block);
+    wrapper::kernel.get_id(array);
     cuda::thread::synchronize();
-    auto begin = array.begin();
-    auto end = array.end();
-    for (auto i = begin; i < end; i++)
-        std::cout << *i << std::endl;
+
+    // verify output
+    unsigned int j = 0;
+    for (unsigned int i : array) {
+        if (i != j) {
+            std::cout << i << " ≠ " << j << std::endl;
+            return -1;
+        }
+        ++j;
+    }
+
     return 0;
 }
+

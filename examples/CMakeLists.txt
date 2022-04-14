@@ -1,8 +1,11 @@
-enable_language(CUDA)
+cmake_minimum_required(VERSION 3.8)
+
+project(cuda-wrapper-examples CXX CUDA)
+
 find_library(CUDA_LIBRARY cuda HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 find_library(CUDART_LIBRARY cudart HINTS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(SYSTEM ${CMAKE_SOURCE_DIR})  # path to cuda_wrapper
 include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
