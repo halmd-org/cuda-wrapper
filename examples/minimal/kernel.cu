@@ -10,7 +10,6 @@
 
 #include "kernel.hpp"
 
-// the following code is part of the documentation in README.rst
 __global__ void get_id(unsigned int* vector)
 {
     unsigned int i = static_cast<unsigned int>(threadIdx.x + blockIdx.x * blockDim.x);
@@ -18,4 +17,3 @@ __global__ void get_id(unsigned int* vector)
 }
 
 wrapper wrapper::kernel = { ::get_id };
-// end of usage in README.rst

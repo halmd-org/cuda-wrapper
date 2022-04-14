@@ -29,14 +29,8 @@ Features
 Usage example
 -------------
 
-.. literalinclude:: /examples/minimal/kernel.hpp
-   :lines: 12-18
-
-.. literalinclude:: /examples/minimal/main.cpp
-   :lines: 19-47
-
-.. literalinclude:: /examples/minimal/kernel.cu
-   :lines: 14-20
+A minimal working example with CUDA code and C++ host code in different
+compilation units can be found at `examples/minimal <examples/minimal>`.
 
 Requirements
 ------------
