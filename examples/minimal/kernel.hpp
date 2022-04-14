@@ -8,6 +8,7 @@
  * 3-clause BSD license.  See accompanying file LICENSE for details.
  */
 
+// the following code is part of the documentation in README.rst
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 struct wrapper
@@ -15,4 +16,4 @@ struct wrapper
     cuda::function<void (unsigned int*)> get_id;
     static wrapper kernel;
 };
-
+// end of usage in README.rst

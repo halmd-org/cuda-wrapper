@@ -26,6 +26,18 @@ Features
 * symbols
 * textures using the texture object API
 
+Usage example
+-------------
+
+.. literalinclude:: /examples/minimal/kernel.hpp
+   :lines: 12-18
+
+.. literalinclude:: /examples/minimal/main.cpp
+   :lines: 19-47
+
+.. literalinclude:: /examples/minimal/kernel.cu
+   :lines: 14-20
+
 Requirements
 ------------
 
@@ -53,8 +65,9 @@ To start testing, just run (after building)::
 Why use both the driver and the runtime library?
 ------------------------------------------------
 
-We initially intended to completely switch to the driver library because it offers much finer control over the devices
-and contexts than the runtime.
-The problem with the driver API are functions and symbols: You need to load an already compiled ptx or cubin file
-at runtime and than reference a function / symbol with a string.
-This would be very unclean for a library so some functions still use the runtime.
+We initially intended to completely switch to the driver library because it
+offers much finer control over the devices and contexts than the runtime. The
+problem with the driver API are functions and symbols: You need to load an
+already compiled ptx or cubin file at runtime and than reference a function or
+symbol with a string. This would be very unclean for a library so some
+functions still use the runtime.

@@ -11,11 +11,12 @@
 
 #include "kernel.hpp"
 
-#include <iostream>
-
 /**
  * This is a minimal example to demonstate the basic usage of cuda_wrapper.
  */
+
+// the following code is part of the documentation in README.rst
+#include <iostream>
 
 int main()
 {
@@ -44,4 +45,5 @@ int main()
 
     return 0;
 }
+// end of usage in README.rst
 
