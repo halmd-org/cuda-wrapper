@@ -4,13 +4,16 @@ cuda-wrapper
 Lightweight C++11 CUDA API wrapper
 ----------------------------------
 
-This library is a header-only, stateless and lightweight wrapper for the CUDA driver and runtime libraries.
-It wraps the C and C++ CUDA functions calls in easy to use C++ STL like objects.
+This library is a header-only, stateless and lightweight wrapper for the CUDA
+driver and runtime libraries.  It wraps the C and C++ CUDA functions calls in
+easy to use C++ STL like objects.
 
-The library was originally created for the `HALMD <http://halmd.org/>`_ project but can be used as a standalone library.
+The library was originally created for the `HALMD <http://halmd.org/>`_ project
+but can be used as a standalone library.
 
-Unfortunately, there is no documentation or examples (contributions welcome), *but* there are pretty detailed
-unit tests so you may have a look at those.
+Unfortunately, there is no documentation (contributions welcome), *but* there
+is an example code and pretty detailed unit tests so you may have a look at
+those.
 
 Features
 --------
