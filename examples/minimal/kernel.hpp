@@ -1,4 +1,4 @@
-/* examples/first/kernel.hpp
+/* examples/minimal/kernel.hpp
  *
  * Copyright (C) 2022 Viktor Skoblin
  *

@@ -1,4 +1,4 @@
-/* examples/first/main.cpp
+/* examples/minimal/main.cpp
  *
  * Copyright (C) 2022 Viktor Skoblin
  * Copyright (C) 2022 Felix Höfling

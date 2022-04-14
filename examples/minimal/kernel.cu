@@ -1,4 +1,4 @@
-/* examples/first/kernel.cu
+/* examples/minimal/kernel.cu
  *
  * Copyright (C) 2022 Viktor Skoblin
  *

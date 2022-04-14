@@ -16,5 +16,5 @@ set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_ARCHITECTURES OFF)
 set(CMAKE_CXX_FLAGS "-Wall -pedantic")
 
-add_executable(first first/main.cpp first/kernel.cu)
-target_link_libraries(first ${CUDA_LIBRARY} ${CUDART_LIBRARY})
+add_executable(minimal minimal/main.cpp minimal/kernel.cu)
+target_link_libraries(minimal ${CUDA_LIBRARY} ${CUDART_LIBRARY})
