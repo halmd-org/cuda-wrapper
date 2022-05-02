@@ -13,7 +13,6 @@
 #define CUDA_FUNCTION_HPP
 
 #include <functional>
-#include <type_traits>
 
 #include <cuda_runtime.h>
 
@@ -143,21 +142,11 @@ public:
     /**
      * execute kernel
      */
-    template <int Z = 0> // hack to enable SFINAE
-    typename std::enable_if<(sizeof...(Args) > 0) && Z == 0>::type
-    operator()(Args... args) const
+    void operator()(Args... args) const
     {
-        void* p[] = {static_cast<void*>(&args)...};
-        CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p, shared_mem_, stream_));
-    }
-
-    // for kernels with no arguments (zero length arrays are not allowed)
-    template <int Z = 0> // hack to enable SFINAE
-    typename std::enable_if<sizeof...(Args) == 0 && Z == 0>::type
-    operator()(Args... args) const
-    {
-        void** p = nullptr;
-        CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p, shared_mem_, stream_));
+        // use additional nullptr element so the array can't become zero sized when the number of argument is zero
+        void* p[] = {nullptr, static_cast<void*>(&args)...};
+        CUDA_CALL(cudaLaunchKernel(f_, grid_, block_, p + 1, shared_mem_, stream_));
     }
 
     /**
