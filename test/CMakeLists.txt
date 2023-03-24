@@ -63,6 +63,7 @@ macro(create_test NAME NM_OR_FILE)
   else()
     add_test(cuda-wrapper/${NAME}
       ${CUDA_MEMCHECK_COMMAND} test_cuda_wrapper_${NAME} --log_level=test_suite)
+    set_tests_properties(cuda-wrapper/${NAME} PROPERTIES REQUIRED_FILES test_cuda_wrapper_${NAME})
   endif()
 endmacro()
 
