@@ -8,8 +8,8 @@ This library is a header-only, stateless and lightweight wrapper for the CUDA
 driver and runtime libraries.  It wraps the C and C++ CUDA functions calls in
 easy to use C++ STL like objects.
 
-The library was originally created for the `HALMD <http://halmd.org/>`_ project
-but can be used as a standalone library.
+The library was originally created for the project `HAL’s MD package
+<https://halmd.org/>`_ but can be used as a standalone library.
 
 Unfortunately, there is no documentation (contributions welcome), *but* there
 is an example code and pretty detailed unit tests so you may have a look at
